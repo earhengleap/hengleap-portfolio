@@ -1,5 +1,6 @@
 // components/navbar-route.tsx
 import { Link } from "react-scroll";
+import { motion } from "framer-motion";
 
 interface NavbarRouteProps {
   to: string;
@@ -8,17 +9,34 @@ interface NavbarRouteProps {
 
 const NavbarRoute = ({ to, label }: NavbarRouteProps) => {
   return (
-    <Link
-      activeClass="text-gray-900 font-medium"
-      to={to}
-      spy={true}
-      smooth={true}
-      offset={-70}
-      duration={500}
-      className="cursor-pointer text-sm hover:text-gray-600 transition-colors text-gray-600"
-    >
-      {label}
-    </Link>
+    <motion.div className="relative">
+      <Link
+        activeClass="text-gray-900 font-medium"
+        to={to}
+        spy={true}
+        smooth={true}
+        offset={-70}
+        duration={500}
+        className="cursor-pointer text-sm text-gray-600 relative block h-6"
+      >
+        <div className="overflow-hidden h-full">
+          <div className="relative transform-gpu">
+            <span className="block transition-transform duration-300 ease-in-out transform group-hover:-translate-y-full">
+              {label}
+            </span>
+            <span className="absolute top-full left-0 block transition-transform duration-300 ease-in-out transform group-hover:-translate-y-full">
+              {label}
+            </span>
+          </div>
+        </div>
+        <motion.span
+          className="absolute bottom-0 left-0 w-full h-0.5 bg-gray-900"
+          initial={{ scaleX: 0 }}
+          whileHover={{ scaleX: 1 }}
+          transition={{ duration: 0.3 }}
+        />
+      </Link>
+    </motion.div>
   );
 };
 
