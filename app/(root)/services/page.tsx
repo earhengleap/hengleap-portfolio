@@ -1,6 +1,8 @@
-// app/(root)/services/page.tsx
 "use client";
 
+import { motion, useAnimation, Variants } from "framer-motion";
+import { useEffect } from "react";
+import { useInView } from "react-intersection-observer";
 import {
   CodeIcon,
   PaintbrushIcon,
@@ -36,7 +38,7 @@ const services = [
       "Design memorable brand identities that leave lasting impressions.",
   },
   {
-    icon: PaletteIcon, // Changed from SwatchesIcon
+    icon: PaletteIcon,
     title: "Graphic Design",
     description: "Create stunning visuals for digital and print media.",
   },
@@ -48,26 +50,113 @@ const services = [
 ];
 
 const ServicesPage = () => {
+  const controls = useAnimation();
+  const [ref, inView] = useInView({
+    triggerOnce: false,
+    threshold: 0.2,
+  });
+
+  useEffect(() => {
+    if (inView) {
+      controls.start("visible");
+    } else {
+      controls.start("hidden");
+    }
+  }, [controls, inView]);
+
+  const headerVariants: Variants = {
+    hidden: {
+      opacity: 0,
+      y: -50,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const getColumnVariants = (columnIndex: number): Variants => {
+    let xOffset = 0;
+
+    // Determine x-offset based on column position
+    if (columnIndex % 3 === 0) xOffset = -100; // Left column
+    else if (columnIndex % 3 === 1) xOffset = 0; // Middle column
+    else xOffset = 100; // Right column
+
+    return {
+      hidden: {
+        opacity: 0,
+        x: xOffset,
+        y: 50,
+      },
+      visible: {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        transition: {
+          duration: 0.8,
+          ease: [0.25, 0.1, 0.25, 1],
+        },
+      },
+    };
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-8 py-20">
-      <div className="text-center mb-16">
-        <h2 className="text-3xl font-bold mb-4">My Services</h2>
+    <div className="max-w-7xl mx-auto px-8 py-20" ref={ref}>
+      <motion.div
+        initial="hidden"
+        animate={controls}
+        variants={headerVariants}
+        className="text-center mb-16 space-y-4"
+      >
+        <h2 className="text-3xl font-bold">My Services</h2>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: "5rem" }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="h-1.5 bg-blue-600 rounded-full mx-auto"
+        />
         <p className="text-gray-600 max-w-2xl mx-auto">
           I offer a wide range of creative services to help bring your ideas to
           life
         </p>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {services.map((service, index) => (
-          <div
+          <motion.div
             key={index}
-            className="p-8 rounded-2xl bg-white border border-gray-100 hover:shadow-lg transition-all duration-300"
+            initial="hidden"
+            animate={controls}
+            variants={getColumnVariants(index)}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              transition: { duration: 0.2 },
+            }}
+            className="p-8 rounded-2xl bg-white border border-gray-100 hover:shadow-lg transition-all"
           >
-            <service.icon className="h-12 w-12 mb-6 text-gray-900" />
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={
+                inView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }
+              }
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: 0.2,
+              }}
+            >
+              <service.icon className="h-12 w-12 mb-6 text-blue-600" />
+            </motion.div>
             <h3 className="text-xl font-semibold mb-4">{service.title}</h3>
             <p className="text-gray-600">{service.description}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -75,3 +164,5 @@ const ServicesPage = () => {
 };
 
 export default ServicesPage;
+
+//OLD CODE

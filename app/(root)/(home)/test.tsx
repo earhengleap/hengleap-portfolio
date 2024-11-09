@@ -1,11 +1,9 @@
-// app/(root)/(home)/page.tsx
-
 "use client";
 
 import { Instagram, Dribbble, Github } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useAnimation, useScroll, Variants } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { ReactNode } from "react";
@@ -18,71 +16,16 @@ import ContactPage from "../contact/page";
 import ScrollToTop from "@/components/scroll-to-top";
 import PortfolioPage from "../porfolio/page";
 
-const AnimatedSection = ({
-  children,
-  direction = "left",
-  className = "",
-}: {
-  children: ReactNode;
-  direction?: "left" | "right";
-  className?: string;
-}) => {
-  const controls = useAnimation();
-  const [ref, inView] = useInView({
-    triggerOnce: false,
-    threshold: 0.2,
-  });
-
-  useEffect(() => {
-    if (inView) {
-      controls.start("visible");
-    } else {
-      controls.start("hidden");
-    }
-  }, [controls, inView]);
-
-  return (
-    <motion.div
-      ref={ref}
-      initial="hidden"
-      animate={controls}
-      variants={{
-        hidden: {
-          opacity: 0,
-          x: direction === "left" ? -100 : 100,
-          y: 50,
-        },
-        visible: {
-          opacity: 1,
-          x: 0,
-          y: 0,
-          transition: {
-            type: "spring",
-            duration: 1.2,
-            damping: 20,
-            stiffness: 80,
-          },
-        },
-      }}
-      className={`overflow-hidden ${className}`}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
 const SplitAnimation = ({ children }: { children: ReactNode }) => {
   const controls = useAnimation();
   const [ref, inView] = useInView({
-    triggerOnce: false,
+    triggerOnce: true,
     threshold: 0.2,
   });
 
   useEffect(() => {
     if (inView) {
       controls.start("visible");
-    } else {
-      controls.start("hidden");
     }
   }, [controls, inView]);
 
@@ -96,31 +39,27 @@ const SplitAnimation = ({ children }: { children: ReactNode }) => {
   };
 
   const leftContentVariants = {
-    hidden: { x: -100, opacity: 0, y: 50 },
+    hidden: { x: -100, opacity: 0 },
     visible: {
       x: 0,
-      y: 0,
       opacity: 1,
       transition: {
         type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
+        damping: 15,
+        stiffness: 100,
       },
     },
   };
 
   const rightContentVariants = {
-    hidden: { x: 100, opacity: 0, y: 50 },
+    hidden: { x: 100, opacity: 0 },
     visible: {
       x: 0,
-      y: 0,
       opacity: 1,
       transition: {
         type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
+        damping: 15,
+        stiffness: 100,
       },
     },
   };
@@ -144,73 +83,53 @@ const SplitAnimation = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const HomePage = () => {
-  const { scrollYProgress } = useScroll();
+const AnimatedSection = ({
+  children,
+  direction,
+}: {
+  children: ReactNode;
+  direction: "left" | "right";
+}) => {
+  const controls = useAnimation();
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
 
-  const profileVariants: Variants = {
-    hidden: {
-      scale: 0.8,
-      opacity: 0,
-    },
-    visible: {
-      scale: 1,
-      opacity: 1,
-      transition: {
-        duration: 1.2,
-        ease: "easeOut",
-      },
-    },
-  };
-
-  const socialVariants: Variants = {
-    hidden: {
-      x: -50,
-      opacity: 0,
-    },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut",
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const contentVariants: Variants = {
-    hidden: {
-      x: 50,
-      opacity: 0,
-    },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut",
-        staggerChildren: 0.2,
-      },
-    },
-  };
+  useEffect(() => {
+    if (inView) {
+      controls.start("visible");
+    }
+  }, [controls, inView]);
 
   return (
-    <main className="flex flex-col">
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 origin-left z-50"
-        style={{ scaleX: scrollYProgress }}
-      />
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      variants={{
+        hidden: { opacity: 0, x: direction === "left" ? -50 : 50 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          transition: { duration: 0.6, ease: "easeOut" },
+        },
+      }}
+      className="overflow-hidden"
+    >
+      {children}
+    </motion.div>
+  );
+};
 
+const HomePage = () => {
+  return (
+    <main className="flex flex-col">
       <section
         id="homeSection"
         className="min-h-screen relative flex items-center"
       >
         <div className="max-w-7xl mx-auto px-8 w-full">
           <SplitAnimation>
-            <motion.div
-              variants={profileVariants}
-              className="flex flex-col items-center space-y-8"
-            >
+            {/* Left Column - Profile Image and Social Links */}
+            <div className="flex flex-col items-center space-y-8">
               <div className="relative h-[400px] w-full rounded-2xl overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
                 <Image
@@ -221,10 +140,8 @@ const HomePage = () => {
                   className="w-full h-full"
                   priority
                 />
-                <motion.div
-                  variants={socialVariants}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col space-y-4"
-                >
+                {/* Social Links */}
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col space-y-4">
                   {[
                     { icon: Instagram, href: "#", label: "Instagram" },
                     { icon: Dribbble, href: "#", label: "Dribbble" },
@@ -234,7 +151,6 @@ const HomePage = () => {
                       key={index}
                       whileHover={{ scale: 1.1, x: 5 }}
                       whileTap={{ scale: 0.95 }}
-                      variants={socialVariants}
                     >
                       <Link
                         href={social.href}
@@ -245,51 +161,33 @@ const HomePage = () => {
                       </Link>
                     </motion.div>
                   ))}
-                </motion.div>
+                </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              variants={contentVariants}
-              className="flex flex-col space-y-6"
-            >
-              <motion.h1
-                variants={contentVariants}
-                className="text-5xl md:text-6xl font-bold"
-              >
+            {/* Right Column - Content */}
+            <div className="flex flex-col space-y-6">
+              <h1 className="text-5xl md:text-6xl font-bold">
                 HengLeap <span className="text-4xl">👋</span>
-              </motion.h1>
-              <motion.p
-                variants={contentVariants}
-                className="text-2xl text-gray-600"
-              >
-                Software Engineer
-              </motion.p>
-              <motion.p
-                variants={contentVariants}
-                className="text-gray-600 max-w-md"
-              >
+              </h1>
+              <p className="text-2xl text-gray-600">Software Engineer</p>
+              <p className="text-gray-600 max-w-md">
                 I&apos;m a Software Engineer based in Cambodia, passionate about
                 my work.
-              </motion.p>
+              </p>
               <motion.button
-                variants={contentVariants}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-gray-900 text-white px-6 py-3 rounded-full w-fit hover:bg-gray-800 transition-colors"
               >
                 Say Hello
               </motion.button>
-            </motion.div>
+            </div>
           </SplitAnimation>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.6 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2"
-        >
+        {/* Scroll Down Indicator */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2">
           <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center pt-2">
             <motion.div
               className="w-1 h-2 bg-gray-400 rounded-full"
@@ -301,33 +199,38 @@ const HomePage = () => {
             />
           </div>
           <span className="text-sm text-gray-400">Scroll down</span>
-        </motion.div>
+        </div>
       </section>
 
+      {/* About Section */}
       <section id="aboutSection" className="min-h-screen">
         <AnimatedSection direction="left">
           <AboutSection />
         </AnimatedSection>
       </section>
 
+      {/* Skills Section */}
       <section id="skillsSection" className="min-h-screen">
         <AnimatedSection direction="right">
           <SkillsSection />
         </AnimatedSection>
       </section>
 
+      {/* Services Section */}
       <section id="servicesSection" className="min-h-screen">
         <AnimatedSection direction="left">
           <ServicesPage />
         </AnimatedSection>
       </section>
 
+      {/* Portfolio Section */}
       <section id="portfolioSection" className="min-h-screen">
         <AnimatedSection direction="right">
           <PortfolioPage />
         </AnimatedSection>
       </section>
 
+      {/* Contact Section */}
       <section id="contactSection" className="min-h-screen">
         <AnimatedSection direction="left">
           <ContactPage />
@@ -340,3 +243,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
+//OLD
