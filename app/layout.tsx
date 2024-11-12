@@ -3,6 +3,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/auth-provider";
+import { Toaster } from "react-hot-toast";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -11,7 +13,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Personal Portfolio",
+  title: "Xing",
   description: "A developer portfolio website",
 };
 
@@ -21,8 +23,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${poppins.variable} antialiased`}>{children}</body>
-    </html>
+    <AuthProvider>
+      <html lang="en">
+        <body className={`${poppins.variable} antialiased`}>
+          {children}
+          <Toaster position="bottom-right" />
+        </body>
+      </html>
+    </AuthProvider>
   );
 }
