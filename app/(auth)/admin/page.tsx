@@ -21,7 +21,7 @@ import { SocialLinks } from "@/components/social-links";
 import toast from "react-hot-toast";
 
 const AdminPage = () => {
-  const { user, isLoading, isAuthenticated } = useKindeAuth();
+  const { isLoading, isAuthenticated } = useKindeAuth();
   const [coverImage, setCoverImage] = useState("/profile.jpg");
   const [isUploading, setIsUploading] = useState(false);
 
