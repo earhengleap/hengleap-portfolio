@@ -1,5 +1,3 @@
-"use client";
-
 import { motion, useAnimation, Variants } from "framer-motion";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
@@ -53,7 +51,8 @@ const ServicesPage = () => {
   const controls = useAnimation();
   const [ref, inView] = useInView({
     triggerOnce: false,
-    threshold: 0.2,
+    threshold: 0.1,
+    rootMargin: "50px",
   });
 
   useEffect(() => {
@@ -67,14 +66,14 @@ const ServicesPage = () => {
   const headerVariants: Variants = {
     hidden: {
       opacity: 0,
-      y: -50,
+      y: -30,
     },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
-        ease: "easeOut",
+        duration: 0.8,
+        ease: [0.77, 0, 0.175, 1],
       },
     },
   };
@@ -83,26 +82,43 @@ const ServicesPage = () => {
     let xOffset = 0;
 
     // Determine x-offset based on column position
-    if (columnIndex % 3 === 0) xOffset = -100; // Left column
+    if (columnIndex % 3 === 0) xOffset = -50; // Left column
     else if (columnIndex % 3 === 1) xOffset = 0; // Middle column
-    else xOffset = 100; // Right column
+    else xOffset = 50; // Right column
 
     return {
       hidden: {
         opacity: 0,
         x: xOffset,
-        y: 50,
+        y: 30,
       },
       visible: {
         opacity: 1,
         x: 0,
         y: 0,
         transition: {
-          duration: 0.8,
-          ease: [0.25, 0.1, 0.25, 1],
+          duration: 0.6,
+          ease: [0.77, 0, 0.175, 1],
+          delay: 0.1 * columnIndex,
         },
       },
     };
+  };
+
+  const iconVariants: Variants = {
+    hidden: {
+      scale: 0,
+      rotate: -180,
+    },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        stiffness: 260,
+        damping: 20,
+      },
+    },
   };
 
   return (
@@ -117,7 +133,11 @@ const ServicesPage = () => {
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: "5rem" }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          transition={{
+            duration: 0.8,
+            delay: 0.3,
+            ease: [0.77, 0, 0.175, 1],
+          }}
           className="h-1.5 bg-blue-600 rounded-full mx-auto"
         />
         <p className="text-gray-600 max-w-2xl mx-auto">
@@ -136,21 +156,14 @@ const ServicesPage = () => {
             whileHover={{
               scale: 1.05,
               boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-              transition: { duration: 0.2 },
+              transition: { duration: 0.3, ease: [0.77, 0, 0.175, 1] },
             }}
             className="p-8 rounded-2xl bg-white border border-gray-100 hover:shadow-lg transition-all"
           >
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={
-                inView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }
-              }
-              transition={{
-                type: "spring",
-                stiffness: 260,
-                damping: 20,
-                delay: 0.2,
-              }}
+              initial="hidden"
+              animate={inView ? "visible" : "hidden"}
+              variants={iconVariants}
             >
               <service.icon className="h-12 w-12 mb-6 text-blue-600" />
             </motion.div>
@@ -164,5 +177,3 @@ const ServicesPage = () => {
 };
 
 export default ServicesPage;
-
-//OLD CODE

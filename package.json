@@ -12,6 +12,7 @@
     "@kinde-oss/kinde-auth-nextjs": "^2.4.6",
     "@motionone/utils": "^10.18.0",
     "@prisma/client": "^5.22.0",
+    "@radix-ui/react-slot": "^1.1.0",
     "@types/react-beautiful-dnd": "^13.1.8",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",

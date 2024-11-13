@@ -22,7 +22,7 @@ interface SkillCategoryProps {
 const SkillsPage = () => {
   const controls = useAnimation();
   const [ref, inView] = useInView({
-    triggerOnce: false, // Changed to false to trigger on every scroll
+    triggerOnce: false,
     threshold: 0.2,
   });
 

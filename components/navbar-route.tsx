@@ -2,14 +2,21 @@
 import { Link } from "react-scroll";
 import { motion } from "framer-motion";
 
-interface NavbarRouteProps {
+export interface NavbarRouteProps {
   to: string;
   label: string;
+  className?: string;
+  onClick?: () => void;
 }
 
-const NavbarRoute = ({ to, label }: NavbarRouteProps) => {
+const NavbarRoute = ({
+  to,
+  label,
+  className = "",
+  onClick,
+}: NavbarRouteProps) => {
   return (
-    <motion.div className="relative">
+    <motion.div className={`relative ${className}`}>
       <Link
         activeClass="text-gray-900 font-medium"
         to={to}
@@ -18,6 +25,7 @@ const NavbarRoute = ({ to, label }: NavbarRouteProps) => {
         offset={-70}
         duration={500}
         className="cursor-pointer text-sm text-gray-600 relative block h-6"
+        onClick={onClick}
       >
         <div className="overflow-hidden h-full">
           <div className="relative transform-gpu">
@@ -41,5 +49,3 @@ const NavbarRoute = ({ to, label }: NavbarRouteProps) => {
 };
 
 export default NavbarRoute;
-
-//old

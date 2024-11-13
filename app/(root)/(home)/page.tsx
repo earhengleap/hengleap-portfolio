@@ -358,63 +358,147 @@ const HomePage = () => {
 
             <motion.div
               variants={contentVariants}
-              className="flex flex-col space-y-6"
+              className="flex flex-col space-y-8 lg:space-y-10"
             >
-              <motion.div variants={contentVariants} className="space-y-4">
-                <motion.h1
-                  variants={contentVariants}
-                  className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700"
+              <motion.div variants={contentVariants} className="space-y-6">
+                {/* Name with animated background */}
+                <motion.div className="relative">
+                  <motion.h1
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 },
+                    }}
+                    className="text-5xl sm:text-6xl lg:text-7xl font-bold"
+                  >
+                    <motion.span
+                      className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-gradient"
+                      animate={{
+                        backgroundPosition: ["0%", "100%", "0%"],
+                      }}
+                      transition={{
+                        duration: 10,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      HengLeap
+                    </motion.span>
+                    <motion.span
+                      animate={{
+                        rotate: [0, -10, 10, -10, 0],
+                        scale: [1, 1.1, 1, 1.1, 1],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 3,
+                      }}
+                      className="inline-block ml-3 text-4xl sm:text-5xl"
+                    >
+                      👋
+                    </motion.span>
+                  </motion.h1>
+                </motion.div>
+
+                {/* Role with typing effect */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  className="relative h-12"
                 >
-                  HengLeap
-                  <motion.span
+                  <motion.p
+                    className="text-2xl sm:text-3xl lg:text-4xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-gray-700 to-gray-900"
                     animate={{
-                      rotate: [0, -10, 10, -10, 0],
+                      opacity: [0, 1, 1, 0],
                     }}
                     transition={{
-                      duration: 1.5,
+                      duration: 3,
                       repeat: Infinity,
-                      repeatDelay: 3,
+                      times: [0, 0.2, 0.8, 1],
                     }}
-                    className="inline-block ml-2 text-3xl sm:text-4xl"
                   >
-                    👋
-                  </motion.span>
-                </motion.h1>
+                    Software Engineer
+                  </motion.p>
+                </motion.div>
 
-                <motion.p
-                  variants={contentVariants}
-                  className="text-xl sm:text-2xl lg:text-3xl text-gray-600 font-medium"
+                {/* Description with line drawing effect */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  className="relative max-w-lg"
                 >
-                  Software Engineer
-                </motion.p>
+                  <motion.div
+                    className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-blue-600 to-purple-600"
+                    initial={{ height: 0 }}
+                    animate={{ height: "100%" }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                  />
+                  <motion.p className="text-lg sm:text-xl text-gray-600 leading-relaxed pl-4">
+                    I&apos;m a passionate Software Engineer based in Cambodia,
+                    specializing in creating exceptional digital experiences.
+                    With a focus on innovation and clean code, I transform ideas
+                    into reality.
+                  </motion.p>
+                </motion.div>
 
-                <motion.p
-                  variants={contentVariants}
-                  className="text-base sm:text-lg text-gray-600 max-w-md leading-relaxed"
+                {/* CTA Buttons */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  className="flex flex-wrap gap-4 mt-8"
                 >
-                  I&apos;m a Software Engineer based in Cambodia, passionate
-                  about my work.
-                </motion.p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="
+          bg-gradient-to-r from-blue-600 to-purple-600
+          text-white
+          px-8 py-4
+          rounded-full
+          text-lg
+          font-medium
+          shadow-lg
+          hover:shadow-xl
+          transform hover:-translate-y-0.5
+          transition-all duration-300
+          relative
+          overflow-hidden
+        "
+                  >
+                    <motion.span
+                      className="absolute inset-0 bg-white"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "100%" }}
+                      transition={{ duration: 0.5 }}
+                      style={{ opacity: 0.2 }}
+                    />
+                    Get in Touch
+                  </motion.button>
 
-                <motion.button
-                  variants={contentVariants}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="
-                    bg-gradient-to-r from-gray-900 to-gray-700
-                    text-white
-                    px-8 py-3
-                    rounded-full
-                    text-lg
-                    font-medium
-                    shadow-lg
-                    hover:shadow-xl
-                    transform hover:-translate-y-0.5
-                    transition-all duration-300
-                  "
-                >
-                  Say Hello
-                </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="
+          border-2 border-gray-700
+          text-gray-700
+          px-8 py-4
+          rounded-full
+          text-lg
+          font-medium
+          hover:bg-gray-50
+          transform hover:-translate-y-0.5
+          transition-all duration-300
+        "
+                  >
+                    View Portfolio
+                  </motion.button>
+                </motion.div>
               </motion.div>
             </motion.div>
           </SplitAnimation>
@@ -463,11 +547,10 @@ const HomePage = () => {
           </AnimatedSection>
         </section>
 
-        <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <section className="py-16 bg-gradient-to-b">
           <div className="relative overflow-hidden">
             {/* Optional overlay effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white z-10 pointer-events-none"></div>
-
             <ParallaxText baseVelocity={-5}>Portfolio Showcase</ParallaxText>
             <ParallaxText baseVelocity={5}>Creative Works</ParallaxText>
           </div>
