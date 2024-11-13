@@ -124,7 +124,7 @@ const AboutPage = () => {
             >
               I&apos;m a web developer and designer with a passion for creating
               beautiful, functional, and user-centered digital experiences. With
-              4 years of experience in the field, I am always looking forward to
+              3 years of experience in the field, I am always looking forward to
               improving my skills and learning new technologies.
             </motion.p>
 
@@ -136,10 +136,10 @@ const AboutPage = () => {
                 <h3 className="font-semibold mb-4">Personal Info</h3>
                 <ul className="space-y-4">
                   {[
-                    { label: "Name", value: "John Smith" },
-                    { label: "Age", value: "25 Years" },
-                    { label: "Location", value: "New York, USA" },
-                    { label: "Experience", value: "4 Years" },
+                    { label: "Name", value: "Hengleap" },
+                    { label: "Age", value: "23 Years" },
+                    { label: "Location", value: "Cambodia, PP" },
+                    { label: "Experience", value: "3 Years" },
                   ].map((item, index) => (
                     <motion.li
                       key={index}

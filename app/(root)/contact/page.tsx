@@ -112,7 +112,7 @@ const ContactPage = () => {
             <Mail className="h-6 w-6 mt-1 text-gray-900" />
             <div>
               <h3 className="text-xl font-semibold mb-2">Email</h3>
-              <p className="text-gray-600">hello@example.com</p>
+              <p className="text-gray-600">hengleap70@gmail.com</p>
             </div>
           </motion.div>
 
@@ -123,7 +123,7 @@ const ContactPage = () => {
             <Phone className="h-6 w-6 mt-1 text-gray-900" />
             <div>
               <h3 className="text-xl font-semibold mb-2">Phone</h3>
-              <p className="text-gray-600">+1 (123) 456-7890</p>
+              <p className="text-gray-600">+855 78 231 215</p>
             </div>
           </motion.div>
 
@@ -134,7 +134,7 @@ const ContactPage = () => {
             <MapPin className="h-6 w-6 mt-1 text-gray-900" />
             <div>
               <h3 className="text-xl font-semibold mb-2">Location</h3>
-              <p className="text-gray-600">New York City, USA</p>
+              <p className="text-gray-600">Phnom Penh City, Cambodia</p>
             </div>
           </motion.div>
         </motion.div>
