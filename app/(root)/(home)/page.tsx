@@ -1,6 +1,6 @@
 "use client";
 
-import { Send, Linkedin, Github, MessageSquareDashed } from "lucide-react";
+import { Send, Linkedin, Github } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, Variants } from "framer-motion";
