@@ -1,6 +1,6 @@
 "use client";
 
-import { Send, Linkedin, Github } from "lucide-react";
+import { Send, Linkedin, Github, MessageSquareDashed } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, Variants } from "framer-motion";
@@ -15,6 +15,7 @@ import { ParallaxText } from "./_components/parallax-text";
 import { AnimatedSection } from "./_components/animated-section";
 import { SplitAnimation } from "./_components/split-animation";
 import Loader from "@/components/loading";
+import { Button } from "@/components/ui/button";
 
 const HomePage = () => {
   const { scrollYProgress } = useScroll();
@@ -26,7 +27,7 @@ const HomePage = () => {
     // Simulate loading for external links
     setTimeout(() => {
       window.location.href = href;
-    }, 1000);
+    }, 1500);
   };
 
   const profileVariants: Variants = {
@@ -195,30 +196,31 @@ const HomePage = () => {
                       hidden: { opacity: 0, y: 20 },
                       visible: { opacity: 1, y: 0 },
                     }}
-                    className="text-5xl sm:text-6xl lg:text-7xl font-bold"
+                    className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight"
                   >
                     <motion.span
-                      className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-gradient"
-                      animate={{
-                        backgroundPosition: ["0%", "100%", "0%"],
-                      }}
-                      transition={{
-                        duration: 10,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
+                      className="inline-block text-black"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 1 }}
                     >
                       HengLeap
                     </motion.span>
                     <motion.span
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{
-                        rotate: [0, -10, 10, -10, 0],
-                        scale: [1, 1.1, 1, 1.1, 1],
+                        opacity: 1,
+                        x: 0,
+                        rotate: [0, -5, 5, -5, 0],
                       }}
                       transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 3,
+                        opacity: { duration: 0.5, delay: 1 },
+                        rotate: {
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatDelay: 4,
+                          ease: "easeInOut",
+                        },
                       }}
                       className="inline-block ml-3 text-4xl sm:text-5xl"
                     >
@@ -272,59 +274,77 @@ const HomePage = () => {
                   </motion.p>
                 </motion.div>
 
-                {/* CTA Buttons */}
+                {/* New CTA Button */}
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0 },
                   }}
-                  className="flex flex-wrap gap-4 mt-8"
+                  className="mt-8"
                 >
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="
-          bg-gradient-to-r from-blue-600 to-purple-600
-          text-white
-          px-8 py-4
-          rounded-full
-          text-lg
-          font-medium
-          shadow-lg
-          hover:shadow-xl
-          transform hover:-translate-y-0.5
-          transition-all duration-300
-          relative
-          overflow-hidden
-        "
+                  <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 25,
+                    }}
+                    className="w-fit"
                   >
-                    <motion.span
-                      className="absolute inset-0 bg-white"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: "100%" }}
-                      transition={{ duration: 0.5 }}
-                      style={{ opacity: 0.2 }}
-                    />
-                    Get in Touch
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="
-          border-2 border-gray-700
-          text-gray-700
-          px-8 py-4
-          rounded-full
-          text-lg
-          font-medium
-          hover:bg-gray-50
-          transform hover:-translate-y-0.5
-          transition-all duration-300
-        "
-                  >
-                    View Portfolio
-                  </motion.button>
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      className="group relative bg-transparent hover:bg-black/5 rounded-full px-8 py-4 text-base border-2 border-black/80 transition-all duration-300 min-w-[160px] overflow-hidden"
+                    >
+                      <motion.span
+                        className="flex items-center justify-center gap-2 text-black w-full"
+                        initial={{ gap: "8px" }}
+                        whileHover={{ gap: "12px" }}
+                        transition={{
+                          duration: 0.3,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        Let's Talk
+                        <div className="relative">
+                          <motion.div
+                            initial={{ x: 0 }}
+                            animate={{
+                              x: [0, 5, 0],
+                            }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Infinity,
+                              repeatType: "reverse",
+                              ease: "easeInOut",
+                            }}
+                            className="relative"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="text-black transform rotate-[-45deg]"
+                            >
+                              <path
+                                d="M1 8H15M15 8L8 1M15 8L8 15"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            <div className="absolute -bottom-1 left-0 w-full h-[1.5px] bg-black"></div>
+                          </motion.div>
+                        </div>
+                      </motion.span>
+                    </Button>
+                  </motion.div>
                 </motion.div>
               </motion.div>
             </motion.div>
@@ -335,7 +355,7 @@ const HomePage = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.6 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2"
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2"
         >
           <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center pt-2">
             <motion.div
