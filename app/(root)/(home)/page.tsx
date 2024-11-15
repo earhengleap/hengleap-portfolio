@@ -1,10 +1,10 @@
 "use client";
 
-import { Instagram, Dribbble, Github } from "lucide-react";
+import { Send, Linkedin, Github } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, Variants } from "framer-motion";
-import React from "react";
+import React, { useState } from "react";
 import AboutSection from "../about/page";
 import SkillsSection from "../skills/page";
 import ServicesPage from "../services/page";
@@ -14,9 +14,20 @@ import PortfolioPage from "../porfolio/page";
 import { ParallaxText } from "./_components/parallax-text";
 import { AnimatedSection } from "./_components/animated-section";
 import { SplitAnimation } from "./_components/split-animation";
+import Loader from "@/components/loading";
 
 const HomePage = () => {
   const { scrollYProgress } = useScroll();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSocialClick = (href: string) => {
+    setIsLoading(true);
+
+    // Simulate loading for external links
+    setTimeout(() => {
+      window.location.href = href;
+    }, 1000);
+  };
 
   const profileVariants: Variants = {
     hidden: {
@@ -61,6 +72,7 @@ const HomePage = () => {
 
   return (
     <main className="flex flex-col w-full overflow-x-hidden">
+      {isLoading && <Loader />}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 origin-left z-50"
         style={{ scaleX: scrollYProgress }}
@@ -90,20 +102,20 @@ const HomePage = () => {
               >
                 {[
                   {
-                    icon: Instagram,
-                    href: "#",
-                    label: "Instagram",
+                    icon: Send,
+                    href: "https://t.me/imxingg",
+                    label: "Telegram",
                     color: "hover:text-pink-600",
                   },
                   {
-                    icon: Dribbble,
-                    href: "#",
-                    label: "Dribbble",
+                    icon: Linkedin,
+                    href: "https://linkedin.com/in/earhengleap",
+                    label: "Linkedin",
                     color: "hover:text-pink-500",
                   },
                   {
                     icon: Github,
-                    href: "#",
+                    href: "https://github.com/earhengleap",
                     label: "Github",
                     color: "hover:text-gray-900",
                   },
@@ -119,48 +131,52 @@ const HomePage = () => {
                   >
                     <Link
                       href={social.href}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSocialClick(social.href);
+                      }}
                       className={`
-                        flex items-center justify-center
-                        w-10 h-10 sm:w-12 sm:h-12
-                        bg-white rounded-full
-                        shadow-lg hover:shadow-xl
-                        transform hover:-translate-y-1
-                        transition-all duration-300
-                        relative z-10
-                      `}
+                flex items-center justify-center
+                w-10 h-10 sm:w-12 sm:h-12
+                bg-white rounded-full
+                shadow-lg hover:shadow-xl
+                transform hover:-translate-y-1
+                transition-all duration-300
+                relative z-10
+              `}
                       aria-label={social.label}
                     >
                       <social.icon
                         className={`
-                          h-5 w-5 sm:h-6 sm:w-6
-                          text-gray-700 ${social.color}
-                          transition-colors duration-300
-                        `}
+                  h-5 w-5 sm:h-6 sm:w-6
+                  text-gray-700 ${social.color}
+                  transition-colors duration-300
+                `}
                       />
                       <span
                         className="
-                        absolute left-full ml-4
-                        bg-white px-3 py-1
-                        rounded-md shadow-md
-                        text-sm font-medium
-                        opacity-0 group-hover:opacity-100
-                        transform -translate-x-2 group-hover:translate-x-0
-                        transition-all duration-300
-                        whitespace-nowrap
-                        pointer-events-none
-                      "
+                absolute left-full ml-4
+                bg-white px-3 py-1
+                rounded-md shadow-md
+                text-sm font-medium
+                opacity-0 group-hover:opacity-100
+                transform -translate-x-2 group-hover:translate-x-0
+                transition-all duration-300
+                whitespace-nowrap
+                pointer-events-none
+              "
                       >
                         {social.label}
                       </span>
                     </Link>
                     <div
                       className="
-                      absolute inset-0
-                      bg-gradient-to-r from-blue-500 to-purple-500
-                      opacity-0 group-hover:opacity-20
-                      rounded-full
-                      transition-opacity duration-300
-                    "
+              absolute inset-0
+              bg-gradient-to-r from-blue-500 to-purple-500
+              opacity-0 group-hover:opacity-20
+              rounded-full
+              transition-opacity duration-300
+            "
                     />
                   </motion.div>
                 ))}

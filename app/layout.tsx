@@ -26,6 +26,11 @@ export default function RootLayout({
     <AuthProvider>
       <html lang="en">
         <body className={`${poppins.variable} antialiased`}>
+          <script
+            type="module"
+            defer
+            src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/spiral.js"
+          ></script>
           {children}
           <Toaster position="bottom-right" />
         </body>
