@@ -417,7 +417,10 @@ const HomePage = () => {
         </section>
 
         {/* Floating Elements */}
-        <div className="fixed bottom-8 right-8 z-50">
+        {/* Floating Elements */}
+        <div className="fixed bottom-28 right-8 z-50">
+          {" "}
+          {/* Changed bottom-8 to bottom-24 */}
           <ScrollToTop />
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { Toaster } from "react-hot-toast";
+import { CrispProvider } from "@/components/crisp-provider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <AuthProvider>
       <html lang="en">
+        <CrispProvider />
         <body className={`${poppins.variable} antialiased`}>
           <script
             type="module"

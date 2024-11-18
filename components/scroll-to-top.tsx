@@ -37,12 +37,33 @@ const ScrollToTop = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
-          whileHover={{ scale: 1.1 }}
+          whileHover={{
+            scale: 1.1,
+            opacity: 0.9,
+          }}
           whileTap={{ scale: 0.9 }}
           onClick={scrollToTop}
-          className="bg-black text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+          className="relative flex flex-col items-center justify-center w-12 h-24 transition-all duration-300 group"
         >
-          <ChevronUp className="w-6 h-6" />
+          <div className="relative">
+            <motion.div
+              animate={{
+                y: [-2, -4, -2],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="flex flex-col items-center gap-[-4px]"
+            >
+              <ChevronUp className="w-5 h-5 absolute -top-1" />
+              <ChevronUp className="w-5 h-5" />
+            </motion.div>
+          </div>
+          <div className="text-xs tracking-widest rotate-90 mt-8">
+            SCROLL&nbsp;TOP
+          </div>
         </motion.button>
       )}
     </AnimatePresence>
