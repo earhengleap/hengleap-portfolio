@@ -16,6 +16,7 @@ import { AnimatedSection } from "./_components/animated-section";
 import { SplitAnimation } from "./_components/split-animation";
 import Loader from "@/components/loading";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/footer";
 
 const HomePage = () => {
   const { scrollYProgress } = useScroll();
@@ -417,13 +418,13 @@ const HomePage = () => {
         </section>
 
         {/* Floating Elements */}
-        {/* Floating Elements */}
         <div className="fixed bottom-28 right-8 z-50">
           {" "}
           {/* Changed bottom-8 to bottom-24 */}
           <ScrollToTop />
         </div>
       </div>
+      <Footer />
     </main>
   );
 };
