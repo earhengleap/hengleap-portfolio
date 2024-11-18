@@ -4,43 +4,64 @@ import Image from "next/image";
 import { motion, useAnimation, Variants } from "framer-motion";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import Link from "next/link";
 
 const projects = [
   {
-    title: "E-commerce Website",
+    title: "Brilliant AI",
+    category: "AI Tool Platform",
+    description:
+      "Create content using AI 10x faster. Features user-friendly interface with powerful content generation capabilities.",
+    image: "/brilliant-cover.mp4",
+    isVideo: true,
+    website: "https://brilliantai.vercel.app/",
+  },
+  {
+    title: "InFinance",
+    category: "Financial Platform",
+    description:
+      "A comprehensive financial platform featuring real-time market data, portfolio management, and advanced analytics tools for informed investment decisions.",
+    image: "/infinance.vercel.app.png",
+    isVideo: false,
+    website: "https://infinance.vercel.app/",
+  },
+  {
+    title: "Pheasa",
+    category: "E-learning Platform",
+    description:
+      "An innovative e-learning platform providing interactive courses, personalized learning paths, and comprehensive educational resources for students and educators.",
+    image: "/pheasa.vercel.app.png",
+    isVideo: false,
+    website: "https://pheasa.vercel.app/",
+  },
+  {
+    title: "Space Themed Portfolio",
     category: "Web Development",
-    image:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
+    description:
+      "An immersive space-themed portfolio website showcasing creative work through interactive design elements and smooth animations.",
+    image: "/space.portfolio.app.png",
+    isVideo: false,
+    website: "https://imxing.vercel.app/",
   },
   {
-    title: "Mobile Banking App",
-    category: "App Development",
+    title: "Coming Soon",
+    category: "Future Project",
+    description:
+      "A new exciting project currently under development. Stay tuned for updates!",
     image:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
+    isVideo: false,
+    website: "",
   },
   {
-    title: "Brand Identity Design",
-    category: "Branding",
+    title: "Coming Soon",
+    category: "Future Project",
+    description:
+      "Another innovative project in the pipeline. More details coming soon!",
     image:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
-  },
-  {
-    title: "Social Media App",
-    category: "UI/UX Design",
-    image:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
-  },
-  {
-    title: "Portfolio Website",
-    category: "Web Development",
-    image:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
-  },
-  {
-    title: "Restaurant App",
-    category: "App Development",
-    image:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
+    isVideo: false,
+    website: "",
   },
 ];
 
@@ -140,35 +161,56 @@ const PortfolioPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {projects.map((project, index) => (
-          <motion.div
+          <Link
             key={index}
-            initial="hidden"
-            animate={controls}
-            variants={getProjectVariants(index)}
-            whileHover="hover"
-            className="relative overflow-hidden rounded-2xl cursor-pointer h-[300px] bg-gray-100"
+            href={project.website}
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <motion.div
-              variants={projectHoverVariants}
-              className="h-full w-full"
+              initial="hidden"
+              animate={controls}
+              variants={getProjectVariants(index)}
+              whileHover="hover"
+              className="relative overflow-hidden rounded-2xl cursor-pointer h-[300px] bg-gray-100"
             >
-              <Image
-                src={project.image}
-                alt={project.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
               <motion.div
-                variants={overlayVariants}
-                initial={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/60 flex flex-col justify-center items-center text-white p-6"
+                variants={projectHoverVariants}
+                className="h-full w-full"
               >
-                <h3 className="text-xl font-semibold mb-2">{project.title}</h3>
-                <p className="text-sm">{project.category}</p>
+                {project.isVideo ? (
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="object-cover w-full h-full"
+                  >
+                    <source src={project.image} type="video/mp4" />
+                  </video>
+                ) : (
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                )}
+                <motion.div
+                  variants={overlayVariants}
+                  initial={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/60 flex flex-col justify-center items-center text-white p-6"
+                >
+                  <h3 className="text-xl font-semibold mb-2">
+                    {project.title}
+                  </h3>
+                  <p className="text-sm mb-2">{project.category}</p>
+                  <p className="text-xs text-center">{project.description}</p>
+                </motion.div>
               </motion.div>
             </motion.div>
-          </motion.div>
+          </Link>
         ))}
       </div>
     </div>

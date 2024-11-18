@@ -88,7 +88,7 @@ const HomePage = () => {
             <motion.div variants={profileVariants} className="relative w-full">
               <div className="relative aspect-[3/4] md:aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                 <Image
-                  src="/profile.jpg"
+                  src="/my-profile.jpg"
                   alt="Profile Picture"
                   fill
                   style={{ objectFit: "cover" }}

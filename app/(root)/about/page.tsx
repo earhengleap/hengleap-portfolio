@@ -4,6 +4,7 @@ import { motion, useAnimation, Variants } from "framer-motion";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import React from "react";
+import Image from "next/image";
 
 const AboutPage = () => {
   const controls = useAnimation();
@@ -104,9 +105,12 @@ const AboutPage = () => {
           <motion.div variants={imageVariants}>
             <div className="relative h-[400px] w-full rounded-2xl overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
-              <div className="w-full h-full bg-gray-200">
-                {/* Add your image here */}
-              </div>
+              <Image
+                src="/about-me.jpg"
+                alt="About Me"
+                fill
+                className="object-cover"
+              />
             </div>
           </motion.div>
 
@@ -116,16 +120,18 @@ const AboutPage = () => {
               variants={itemVariants}
               className="text-3xl font-semibold"
             >
-              Web Developer & Visual Designer
+              Web & Mobile Developer
             </motion.h2>
             <motion.p
               variants={itemVariants}
               className="text-gray-600 leading-relaxed"
             >
-              I&apos;m a web developer and designer with a passion for creating
-              beautiful, functional, and user-centered digital experiences. With
-              3 years of experience in the field, I am always looking forward to
-              improving my skills and learning new technologies.
+              I&apos;m a full-stack developer specializing in web and mobile
+              development, with expertise in creating user-centered digital
+              experiences. I also bring UI/UX design skills to my projects,
+              ensuring they&apos;re not only functional but also intuitive and
+              engaging. With 3 years of experience, I&apos;m constantly
+              exploring new technologies and enhancing my skill set.
             </motion.p>
 
             <motion.div
@@ -157,10 +163,10 @@ const AboutPage = () => {
                 <h3 className="font-semibold mb-4">Interests</h3>
                 <ul className="space-y-4">
                   {[
-                    "UI/UX",
                     "Web Development",
-                    "Mobile Design",
-                    "Photography",
+                    "Mobile Development",
+                    "UI/UX Design",
+                    "New Technologies",
                   ].map((interest, index) => (
                     <motion.li
                       key={index}
