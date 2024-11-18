@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import Link from "next/link";
 
@@ -73,6 +73,9 @@ const PortfolioPage = () => {
     rootMargin: "50px",
   });
 
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+
   useEffect(() => {
     if (inView) {
       controls.start("visible");
@@ -139,6 +142,20 @@ const PortfolioPage = () => {
     },
   };
 
+  const arrowVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.8,
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.2,
+      },
+    },
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-8 py-20" ref={ref}>
       <motion.div
@@ -172,6 +189,15 @@ const PortfolioPage = () => {
               animate={controls}
               variants={getProjectVariants(index)}
               whileHover="hover"
+              onHoverStart={() => setHoveredCard(index)}
+              onHoverEnd={() => setHoveredCard(null)}
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setMousePosition({
+                  x: e.clientX - rect.left,
+                  y: e.clientY - rect.top,
+                });
+              }}
               className="relative overflow-hidden rounded-2xl cursor-pointer h-[300px] bg-gray-100"
             >
               <motion.div
@@ -208,6 +234,37 @@ const PortfolioPage = () => {
                   <p className="text-sm mb-2">{project.category}</p>
                   <p className="text-xs text-center">{project.description}</p>
                 </motion.div>
+
+                {hoveredCard === index && (
+                  <motion.div
+                    variants={arrowVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: mousePosition.x - 25,
+                      top: mousePosition.y - 25,
+                    }}
+                  >
+                    <div className="bg-white rounded-lg p-3 shadow-lg">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M7 17L17 7M17 7H7M17 7V17"
+                          stroke="black"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             </motion.div>
           </Link>

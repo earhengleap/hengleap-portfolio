@@ -1,12 +1,10 @@
-// components/navbar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { NavbarItems } from "./navbar-items";
 import NavbarRoute from "./navbar-route";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -67,21 +65,7 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-8">
         <div className="flex items-center h-20">
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex-shrink-0 w-[180px]"
-          >
-            <motion.span
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400 }}
-              className="text-xl font-medium bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent"
-            >
-              HengLeap
-            </motion.span>
-          </motion.div>
+          {/* Logo section removed */}
 
           {/* Desktop Navigation - Centered */}
           <motion.div
@@ -107,23 +91,6 @@ const Navbar = () => {
                 </motion.div>
               ))}
             </div>
-          </motion.div>
-
-          {/* Download CV Button */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="hidden md:block w-[180px] text-right"
-          >
-            <Button
-              variant="ghost"
-              className="group relative px-4 py-2 rounded-full border border-gray-200 hover:border-gray-300 transition-all duration-300"
-            >
-              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-gray-800 to-gray-600 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
-              <Download size={16} className="mr-2" />
-              <span>Download CV</span>
-            </Button>
           </motion.div>
 
           {/* Mobile Menu Button */}
@@ -161,18 +128,6 @@ const Navbar = () => {
                     />
                   </motion.div>
                 ))}
-                <motion.div
-                  custom={NavbarItems.length}
-                  variants={menuItemVariants}
-                >
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-center mt-2 rounded-xl border border-gray-200 hover:bg-gray-50"
-                  >
-                    <Download size={16} className="mr-2" />
-                    Download CV
-                  </Button>
-                </motion.div>
               </div>
             </motion.div>
           )}

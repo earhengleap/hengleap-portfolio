@@ -1,11 +1,20 @@
+// app/(root)/contact/page.tsx
+
 "use client";
 
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useInView } from "react-intersection-observer";
+import toast from "react-hot-toast";
 
 const ContactPage = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const controls = useAnimation();
   const [ref, inView] = useInView({
     triggerOnce: false,
@@ -19,6 +28,41 @@ const ContactPage = () => {
       controls.start("hidden");
     }
   }, [controls, inView]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          subject,
+          message,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Message sent successfully!");
+        // Reset form
+        setName("");
+        setEmail("");
+        setSubject("");
+        setMessage("");
+      } else {
+        toast.error("Failed to send message. Please try again.");
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
+    }
+
+    setIsSubmitting(false);
+  };
 
   const headerVariants: Variants = {
     hidden: {
@@ -140,6 +184,7 @@ const ContactPage = () => {
         </motion.div>
 
         <motion.form
+          onSubmit={handleSubmit}
           initial="hidden"
           animate={controls}
           variants={formVariants}
@@ -153,12 +198,18 @@ const ContactPage = () => {
               whileFocus={{ scale: 1.02 }}
               type="text"
               placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
             <motion.input
               whileFocus={{ scale: 1.02 }}
               type="email"
               placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </motion.div>
@@ -167,6 +218,9 @@ const ContactPage = () => {
             whileFocus={{ scale: 1.02 }}
             type="text"
             placeholder="Subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            required
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
           />
           <motion.textarea
@@ -174,6 +228,9 @@ const ContactPage = () => {
             whileFocus={{ scale: 1.02 }}
             placeholder="Message"
             rows={6}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            required
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
           />
           <motion.button
@@ -181,9 +238,10 @@ const ContactPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
-            className="bg-gray-900 text-white px-8 py-3 rounded-lg flex items-center space-x-2 hover:bg-gray-800 transition-colors"
+            disabled={isSubmitting}
+            className="bg-gray-900 text-white px-8 py-3 rounded-lg flex items-center space-x-2 hover:bg-gray-800 transition-colors disabled:opacity-50"
           >
-            <span>Send Message</span>
+            <span>{isSubmitting ? "Sending..." : "Send Message"}</span>
             <Send className="h-4 w-4" />
           </motion.button>
         </motion.form>

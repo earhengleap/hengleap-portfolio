@@ -1,16 +1,15 @@
-// components/scroll-to-top.tsx
 "use client";
 
-import { ArrowUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronUp } from "lucide-react";
 
 const ScrollToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const toggleVisibility = () => {
-      if (window.scrollY > 300) {
+      if (window.pageYOffset > 300) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
@@ -18,7 +17,10 @@ const ScrollToTop = () => {
     };
 
     window.addEventListener("scroll", toggleVisibility);
-    return () => window.removeEventListener("scroll", toggleVisibility);
+
+    return () => {
+      window.removeEventListener("scroll", toggleVisibility);
+    };
   }, []);
 
   const scrollToTop = () => {
@@ -32,16 +34,15 @@ const ScrollToTop = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.button
-          initial={{ opacity: 0, scale: 0.5 }}
+          initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.5 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 p-3 bg-gray-800 hover:bg-gray-700 
-          text-white rounded-lg shadow-lg transition-colors duration-300"
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.95 }}
+          className="bg-black text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
         >
-          <ArrowUp className="h-6 w-6" />
+          <ChevronUp className="w-6 h-6" />
         </motion.button>
       )}
     </AnimatePresence>

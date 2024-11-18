@@ -1,3 +1,5 @@
+// app/(root)/about/page.tsx
+
 "use client";
 
 import { motion, useAnimation, Variants } from "framer-motion";

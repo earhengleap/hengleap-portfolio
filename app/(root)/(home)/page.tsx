@@ -23,8 +23,6 @@ const HomePage = () => {
 
   const handleSocialClick = (href: string) => {
     setIsLoading(true);
-
-    // Simulate loading for external links
     setTimeout(() => {
       window.location.href = href;
     }, 1500);
@@ -79,12 +77,14 @@ const HomePage = () => {
         style={{ scaleX: scrollYProgress }}
       />
 
+      {/* Hero Section */}
       <section
         id="homeSection"
-        className="min-h-screen relative flex items-center py-16 sm:py-20"
+        className="min-h-screen relative flex items-center py-16 sm:py-20 bg-white"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <SplitAnimation>
+            {/* Profile Image and Social Links */}
             <motion.div variants={profileVariants} className="relative w-full">
               <div className="relative aspect-[3/4] md:aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                 <Image
@@ -97,6 +97,7 @@ const HomePage = () => {
                 />
               </div>
 
+              {/* Social Links */}
               <motion.div
                 variants={socialVariants}
                 className="absolute -left-4 top-1/2 -translate-y-1/2 flex flex-col space-y-4 z-10"
@@ -136,60 +137,29 @@ const HomePage = () => {
                         e.preventDefault();
                         handleSocialClick(social.href);
                       }}
-                      className={`
-                flex items-center justify-center
-                w-10 h-10 sm:w-12 sm:h-12
-                bg-white rounded-full
-                shadow-lg hover:shadow-xl
-                transform hover:-translate-y-1
-                transition-all duration-300
-                relative z-10
-              `}
+                      className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 relative z-10"
                       aria-label={social.label}
                     >
                       <social.icon
-                        className={`
-                  h-5 w-5 sm:h-6 sm:w-6
-                  text-gray-700 ${social.color}
-                  transition-colors duration-300
-                `}
+                        className={`h-5 w-5 sm:h-6 sm:w-6 text-gray-700 ${social.color} transition-colors duration-300`}
                       />
-                      <span
-                        className="
-                absolute left-full ml-4
-                bg-white px-3 py-1
-                rounded-md shadow-md
-                text-sm font-medium
-                opacity-0 group-hover:opacity-100
-                transform -translate-x-2 group-hover:translate-x-0
-                transition-all duration-300
-                whitespace-nowrap
-                pointer-events-none
-              "
-                      >
+                      <span className="absolute left-full ml-4 bg-white px-3 py-1 rounded-md shadow-md text-sm font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300 whitespace-nowrap pointer-events-none">
                         {social.label}
                       </span>
                     </Link>
-                    <div
-                      className="
-              absolute inset-0
-              bg-gradient-to-r from-blue-500 to-purple-500
-              opacity-0 group-hover:opacity-20
-              rounded-full
-              transition-opacity duration-300
-            "
-                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 rounded-full transition-opacity duration-300" />
                   </motion.div>
                 ))}
               </motion.div>
             </motion.div>
 
+            {/* Content Section */}
             <motion.div
               variants={contentVariants}
               className="flex flex-col space-y-8 lg:space-y-10"
             >
               <motion.div variants={contentVariants} className="space-y-6">
-                {/* Name with animated background */}
+                {/* Name */}
                 <motion.div className="relative">
                   <motion.h1
                     variants={{
@@ -229,7 +199,7 @@ const HomePage = () => {
                   </motion.h1>
                 </motion.div>
 
-                {/* Role with typing effect */}
+                {/* Role */}
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
@@ -252,7 +222,7 @@ const HomePage = () => {
                   </motion.p>
                 </motion.div>
 
-                {/* Description with line drawing effect */}
+                {/* Description */}
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
@@ -274,7 +244,7 @@ const HomePage = () => {
                   </motion.p>
                 </motion.div>
 
-                {/* New CTA Button */}
+                {/* CTA Button */}
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
@@ -308,7 +278,7 @@ const HomePage = () => {
                           ease: "easeInOut",
                         }}
                       >
-                        Let's Talk
+                        Let&apos;s Talk
                         <div className="relative">
                           <motion.div
                             initial={{ x: 0 }}
@@ -351,6 +321,7 @@ const HomePage = () => {
           </SplitAnimation>
         </div>
 
+        {/* Scroll Indicator */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -375,23 +346,41 @@ const HomePage = () => {
         </motion.div>
       </section>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        <section id="aboutSection" className="min-h-screen py-12 sm:py-16">
-          <AnimatedSection direction="left">
-            <AboutSection />
-          </AnimatedSection>
+      {/* Main Content Sections */}
+      <div className="w-full">
+        {/* About Section */}
+        <section
+          id="aboutSection"
+          className="relative min-h-screen py-24 bg-gray-50"
+        >
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <AnimatedSection direction="left">
+              <AboutSection />
+            </AnimatedSection>
+          </div>
+        </section>
+        {/* Skills Section */}
+        <section
+          id="skillsSection"
+          className="relative min-h-screen py-24 bg-white"
+        >
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <AnimatedSection direction="right">
+              <SkillsSection />
+            </AnimatedSection>
+          </div>
         </section>
 
-        <section id="skillsSection" className="min-h-screen py-12 sm:py-16">
-          <AnimatedSection direction="right">
-            <SkillsSection />
-          </AnimatedSection>
-        </section>
-
-        <section id="servicesSection" className="min-h-screen py-12 sm:py-16">
-          <AnimatedSection direction="left">
-            <ServicesPage />
-          </AnimatedSection>
+        {/* Services Section */}
+        <section
+          id="servicesSection"
+          className="relative min-h-screen py-24 bg-gray-50"
+        >
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <AnimatedSection direction="left">
+              <ServicesPage />
+            </AnimatedSection>
+          </div>
         </section>
 
         <section className="py-16 bg-gradient-to-b">
@@ -403,20 +392,35 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section id="portfolioSection" className="min-h-screen py-12 sm:py-16">
-          <AnimatedSection direction="right">
-            <PortfolioPage />
-          </AnimatedSection>
+        {/* Portfolio Section */}
+        <section
+          id="portfolioSection"
+          className="relative min-h-screen py-24 bg-white"
+        >
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <AnimatedSection direction="right">
+              <PortfolioPage />
+            </AnimatedSection>
+          </div>
         </section>
 
-        <section id="contactSection" className="min-h-screen py-12 sm:py-16">
-          <AnimatedSection direction="left">
-            <ContactPage />
-          </AnimatedSection>
+        {/* Contact Section */}
+        <section
+          id="contactSection"
+          className="relative min-h-screen py-24 bg-gray-50"
+        >
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <AnimatedSection direction="left">
+              <ContactPage />
+            </AnimatedSection>
+          </div>
         </section>
+
+        {/* Floating Elements */}
+        <div className="fixed bottom-8 right-8 z-50">
+          <ScrollToTop />
+        </div>
       </div>
-
-      <ScrollToTop />
     </main>
   );
 };

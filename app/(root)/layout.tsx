@@ -1,9 +1,8 @@
-// components/RootLayout.tsx
 import Navbar from "@/components/navbar";
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div>
+    <div className="relative">
       <Navbar />
       {children}
     </div>
