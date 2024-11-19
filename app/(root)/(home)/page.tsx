@@ -1,3 +1,5 @@
+// app/(root)/(home)/page.tsx
+
 "use client";
 
 import { Send, Linkedin, Github } from "lucide-react";
@@ -71,7 +73,7 @@ const HomePage = () => {
   };
 
   return (
-    <main className="flex flex-col w-full overflow-x-hidden">
+    <main className="flex flex-col w-full">
       {isLoading && <Loader />}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 origin-left z-50"
@@ -419,8 +421,6 @@ const HomePage = () => {
 
         {/* Floating Elements */}
         <div className="fixed bottom-28 right-8 z-50">
-          {" "}
-          {/* Changed bottom-8 to bottom-24 */}
           <ScrollToTop />
         </div>
       </div>
