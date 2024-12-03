@@ -5,6 +5,9 @@ const nextConfig = {
     dirs: ["pages", "components"], // Optionally specify which directories to apply the rule to
     ignoreDuringBuilds: true, // Optional: Ignore ESLint during build process
   },
+  images: {
+    domains: ["images.unsplash.com"],
+  },
 };
 
 export default nextConfig;
