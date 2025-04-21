@@ -1,8 +1,8 @@
 // app/api/send/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
-import { EmailTemplate } from '@/components/email-template';
+import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+import { EmailTemplate } from "@/components/email-template";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -12,14 +12,14 @@ export async function POST(request: NextRequest) {
     const { name, email, subject, message } = body;
 
     const { data, error } = await resend.emails.send({
-      from: 'Your Portfolio <onboarding@resend.dev>',
-      to: ['hengleap70@gmail.com'], // Your email address
+      from: "Your Portfolio <onboarding@resend.dev>",
+      to: ["hengleap70@gmail.com"], // Your email address
       subject: `New Contact Form Submission: ${subject}`,
-      react: EmailTemplate({ 
-        name, 
-        email, 
-        subject, 
-        message 
+      react: EmailTemplate({
+        name,
+        email,
+        subject,
+        message,
       }),
     });
 
@@ -28,7 +28,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+  } catch (err) {
+    console.error("Email sending error:", err);
+    return NextResponse.json(
+      { error: "Failed to send email" },
+      { status: 500 }
+    );
   }
 }

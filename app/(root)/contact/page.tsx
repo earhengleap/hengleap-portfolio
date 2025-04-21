@@ -57,7 +57,8 @@ const ContactPage = () => {
       } else {
         toast.error("Failed to send message. Please try again.");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Form submission error:", err);
       toast.error("An error occurred. Please try again.");
     }
 

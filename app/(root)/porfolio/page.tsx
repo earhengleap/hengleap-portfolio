@@ -44,14 +44,13 @@ const projects = [
     website: "https://imxing.vercel.app/",
   },
   {
-    title: "Coming Soon",
-    category: "Future Project",
+    title: "Rub Pheap",
+    category: "Web Development",
     description:
-      "A new exciting project currently under development. Stay tuned for updates!",
-    image:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E",
-    isVideo: false,
-    website: "",
+      "Rub Pheap is a web application that allows users to create an visual image from their own imagination and model training just upload the collection of their images and the model will be trained to generate images based on the uploaded images. It is a powerful tool for artists, designers, and anyone looking to create unique and personalized images. (Business Photo, Portrait, and more)",
+    image: "/rub-pheap.mp4",
+    isVideo: true,
+    website: "https://rubpheap.vercel.app/",
   },
   {
     title: "Coming Soon",

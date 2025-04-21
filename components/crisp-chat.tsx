@@ -1,3 +1,5 @@
+//component/script-chat.tsx
+
 "use client";
 
 import { useEffect } from "react";

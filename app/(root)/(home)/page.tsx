@@ -248,6 +248,7 @@ const HomePage = () => {
                 </motion.div>
 
                 {/* CTA Button */}
+                {/* CTA Button */}
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 20 },
@@ -271,6 +272,11 @@ const HomePage = () => {
                       variant="ghost"
                       size="lg"
                       className="group relative bg-transparent hover:bg-black/5 rounded-full px-8 py-4 text-base border-2 border-black/80 transition-all duration-300 min-w-[160px] overflow-hidden"
+                      onClick={() => {
+                        document
+                          .getElementById("contactSection")
+                          ?.scrollIntoView({ behavior: "smooth" });
+                      }}
                     >
                       <motion.span
                         className="flex items-center justify-center gap-2 text-black w-full"
