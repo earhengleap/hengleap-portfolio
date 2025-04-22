@@ -1,12 +1,11 @@
-// app/(root)/about/page.tsx
-
 "use client";
 
 import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import React from "react";
 import Image from "next/image";
+import Loader from "@/components/loading"; // Import the Loader component
 
 const AboutPage = () => {
   const controls = useAnimation();
@@ -14,6 +13,7 @@ const AboutPage = () => {
     triggerOnce: false,
     threshold: 0.2,
   });
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
   useEffect(() => {
     if (inView) {
@@ -22,6 +22,29 @@ const AboutPage = () => {
       controls.start("hidden");
     }
   }, [controls, inView]);
+
+  // Handle CV download with loading state
+  const handleDownloadCV = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // Simulate loading time then trigger download
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = "/ear-hengleap-cv.pdf";
+      link.download = "ear-hengleap-cv.pdf";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Give a little extra time for the download to start before hiding loader
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
+    }, 1500);
+  };
 
   const headerVariants: Variants = {
     hidden: { y: -50, opacity: 0 },
@@ -82,6 +105,7 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen pt-32 px-8 flex justify-center items-center">
+      {isLoading && <Loader />} {/* Show loader when loading */}
       <motion.div
         ref={ref}
         initial="hidden"
@@ -184,14 +208,31 @@ const AboutPage = () => {
               </div>
             </motion.div>
 
-            <motion.button
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gray-900 text-white px-8 py-4 rounded-full hover:bg-gray-800 transition-colors"
-            >
-              Download CV
-            </motion.button>
+            {/* Download CV button with loading functionality */}
+            <motion.div variants={itemVariants}>
+              <motion.button
+                onClick={handleDownloadCV}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gray-900 text-white px-8 py-4 rounded-full hover:bg-gray-800 transition-colors flex items-center gap-2"
+              >
+                <span>Download CV</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                  />
+                </svg>
+              </motion.button>
+            </motion.div>
           </motion.div>
         </div>
       </motion.div>

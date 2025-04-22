@@ -1,11 +1,25 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Linkedin, Github, Heart } from "lucide-react";
+import Loader from "@/components/loading"; // Assuming this is the correct path to your Loader component
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
+
+  // Clear timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+    };
+  }, [loadingTimeout]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -51,6 +65,44 @@ const Footer = () => {
     },
   ];
 
+  // Handler for social link clicks with loading effect
+  const handleSocialClick =
+    (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      setIsLoading(true);
+
+      // Set timeout and store the reference for cleanup
+      const timeout = setTimeout(() => {
+        window.location.href = href;
+        setIsLoading(false);
+      }, 1500);
+
+      setLoadingTimeout(timeout);
+    };
+
+  // Scroll handler for navigation links
+  const handleScrollToSection =
+    (sectionId: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+
+        // Update URL without showing the hash
+        window.history.pushState({}, "", window.location.pathname);
+      }
+    };
+
+  // Navigation links with section IDs
+  const navigationLinks = [
+    { name: "About", sectionId: "aboutSection" },
+    { name: "Skills", sectionId: "skillsSection" },
+    { name: "Services", sectionId: "servicesSection" },
+    { name: "Portfolio", sectionId: "portfolioSection" },
+    { name: "Contact", sectionId: "contactSection" },
+  ];
+
   return (
     <motion.footer
       initial="hidden"
@@ -59,6 +111,7 @@ const Footer = () => {
       variants={containerVariants}
       className="bg-white border-t border-gray-100 py-12"
     >
+      {isLoading && <Loader />}
       <div className="container mx-auto px-4 max-w-5xl">
         <motion.div
           variants={containerVariants}
@@ -78,7 +131,7 @@ const Footer = () => {
                 <motion.a
                   key={index}
                   href={social.href}
-                  target="_blank"
+                  onClick={handleSocialClick(social.href)}
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
@@ -97,24 +150,18 @@ const Footer = () => {
               Navigation
             </h3>
             <ul className="space-y-2">
-              {[
-                { name: "About", href: "#aboutSection" },
-                { name: "Skills", href: "#skillsSection" },
-                { name: "Services", href: "#servicesSection" },
-                { name: "Portfolio", href: "#portfolioSection" },
-                { name: "Contact", href: "#contactSection" },
-              ].map((link, index) => (
+              {navigationLinks.map((link, index) => (
                 <motion.li
                   key={index}
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Link
-                    href={link.href}
-                    className="text-gray-500 hover:text-black text-sm transition-colors duration-300"
+                  <button
+                    onClick={handleScrollToSection(link.sectionId)}
+                    className="text-gray-500 hover:text-black text-sm transition-colors duration-300 cursor-pointer"
                   >
                     {link.name}
-                  </Link>
+                  </button>
                 </motion.li>
               ))}
             </ul>
