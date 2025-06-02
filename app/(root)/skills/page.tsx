@@ -178,7 +178,7 @@ const SkillsPage = () => {
   //   "Agile Methodologies",
   // ];
 
-  const otherSkills: string[] = ["Developing..."];
+  const otherSkills: string[] = ["Under Development... <3"];
 
   return (
     <div className="min-h-screen pt-32 px-8 bg-white dark:bg-gray-900">
