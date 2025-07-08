@@ -110,22 +110,22 @@ const SkillsPage = () => {
     {
       category: "Web Development",
       items: [
-        { name: "HTML/CSS", level: 95 },
-        { name: "JavaScript/TypeScript", level: 90 },
-        { name: "React.js", level: 88 },
+        { name: "HTML/CSS", level: 85 },
+        { name: "JavaScript/TypeScript", level: 80 },
+        { name: "React.js", level: 80 },
         { name: "Next.js", level: 85 },
-        { name: "Tailwind CSS", level: 92 },
-        { name: "Node/Express", level: 80 },
+        { name: "Tailwind CSS", level: 75 },
+        { name: "Node/Express", level: 75 },
       ],
     },
     {
       category: "Database & Backend",
       items: [
-        { name: "Node.js", level: 80 },
-        { name: "PostgreSQL", level: 80 },
+        { name: "Node.js", level: 75 },
+        { name: "PostgreSQL", level: 75 },
         { name: "MongoDB", level: 60 },
         { name: "Express.js", level: 75 },
-        { name: "REST APIs", level: 75 },
+        { name: "REST APIs", level: 65 },
       ],
     },
     {
@@ -142,9 +142,9 @@ const SkillsPage = () => {
       category: "UI/UX Design",
       items: [
         { name: "Figma", level: 80 },
-        { name: "Adobe XD", level: 80 },
-        { name: "Wireframing", level: 80 },
-        { name: "User Research", level: 70 },
+        { name: "Adobe XD", level: 50 },
+        // { name: "Wireframing", level: 80 },
+        { name: "User Research", level: 65 },
       ],
     },
   ];
