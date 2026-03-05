@@ -20,6 +20,7 @@ const NAV_ITEMS = [
     { name: "projects.json", path: "/projects", icon: FileJson, color: "text-green-400" },
     { name: "skills.md", path: "/skills", icon: Settings, color: "text-purple-400" },
     { name: "contact.sh", path: "/contact", icon: Briefcase, color: "text-orange-400" },
+    { name: "settings.json", path: "/settings.json", icon: Settings, color: "text-gray-400" },
 ];
 
 interface SearchResult {
@@ -134,9 +135,9 @@ export function Sidebar({
             )}
 
             <div className={cn(
-                "fixed inset-y-0 left-0 z-50 h-full bg-card border-border flex flex-col shrink-0 md:relative group",
-                !isResizing && "transition-all duration-300 ease-in-out",
-                // Mobile layout
+                "fixed inset-y-0 left-12 md:left-0 z-[45] md:z-0 h-full bg-card border-border flex flex-col shrink-0 md:relative group",
+                !isResizing && "transition-transform duration-300 ease-in-out md:transition-all",
+                // Mobile layout (starts at left-12 so it's next to the activity bar)
                 isMobileOpen ? "translate-x-0 w-64 border-r" : "-translate-x-full w-64 border-r",
                 // Desktop layout
                 isDesktopOpen ? "md:translate-x-0 md:w-[var(--sidebar-width)] md:border-r" : "md:translate-x-0 md:w-0 md:border-r-0 md:overflow-hidden md:opacity-0"

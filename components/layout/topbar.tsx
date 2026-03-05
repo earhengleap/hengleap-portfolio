@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { X, Menu } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const ALL_POSSIBLE_TABS = [
@@ -16,21 +16,51 @@ const ALL_POSSIBLE_TABS = [
 export function Topbar({
     onMenuClick,
     openTabs,
-    onCloseTab
+    onCloseTab,
+    onCloseAll,
+    onCloseOthers
 }: {
     onMenuClick: () => void;
     openTabs: { name: string, path: string }[];
     onCloseTab: (e: React.MouseEvent, path: string) => void;
+    onCloseAll: () => void;
+    onCloseOthers: (path: string) => void;
 }) {
     const pathname = usePathname();
     const router = useRouter();
+    const menuRef = useRef<HTMLDivElement>(null);
+    const [contextMenu, setContextMenu] = useState<{
+        x: number;
+        y: number;
+        tabPath: string;
+    } | null>(null);
+
+    // Close context menu on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setContextMenu(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleContextMenu = (e: React.MouseEvent, tabPath: string) => {
+        e.preventDefault();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            tabPath
+        });
+    };
 
     // Handled by parent.
 
     return (
         <div className="h-10 bg-card border-b border-border flex items-end overflow-x-auto no-scrollbar shrink-0 w-full relative">
             {/* File Tabs */}
-            <div className="flex bg-card">
+            <div className="flex bg-card no-global-context">
                 {openTabs.map((tab) => {
                     const isActive = pathname === tab.path;
 
@@ -38,6 +68,7 @@ export function Topbar({
                         <div
                             key={tab.path}
                             onClick={() => router.push(tab.path)}
+                            onContextMenu={(e) => handleContextMenu(e, tab.path)}
                             className={cn(
                                 "group flex shrink-0 items-center h-9 px-4 min-w-[120px] max-w-[200px] border-r border-border text-sm cursor-pointer select-none",
                                 isActive
@@ -64,6 +95,44 @@ export function Topbar({
             <div className="flex-1 flex justify-end items-center h-full px-4 text-xs text-muted-foreground">
                 <span className="hidden md:inline-block">Codex Coder Workspace</span>
             </div>
+
+            {/* Right Click Context Menu */}
+            {contextMenu && (
+                <div
+                    ref={menuRef}
+                    className="fixed z-[100] w-48 bg-popover text-popover-foreground border border-border rounded-md shadow-lg py-1 animate-in fade-in zoom-in-95 duration-100"
+                    style={{ top: contextMenu.y, left: contextMenu.x }}
+                >
+                    <button
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                        onClick={(e) => {
+                            onCloseTab(e, contextMenu.tabPath);
+                            setContextMenu(null);
+                        }}
+                    >
+                        Close
+                    </button>
+                    <button
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                        onClick={() => {
+                            onCloseOthers(contextMenu.tabPath);
+                            setContextMenu(null);
+                        }}
+                    >
+                        Close Others
+                    </button>
+                    <div className="h-[1px] bg-border my-1 mx-2" />
+                    <button
+                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                        onClick={() => {
+                            onCloseAll();
+                            setContextMenu(null);
+                        }}
+                    >
+                        Close All
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

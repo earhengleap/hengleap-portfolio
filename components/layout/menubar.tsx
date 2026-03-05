@@ -91,7 +91,7 @@ const MENUS: MenuProps[] = [
     {
         label: "Terminal",
         items: [
-            { label: "New Terminal", shortcut: "Ctrl+Shift+`" },
+            { label: "New Terminal", shortcut: "Ctrl+`" },
             { label: "Split Terminal", shortcut: "Ctrl+Shift+5" },
             { divider: true },
             { label: "Run Task..." },
@@ -132,23 +132,72 @@ export function MenuBar({
 
     const handleItemClick = (label: string) => {
         setActiveMenu(null);
+        setIsMobileDropdownOpen(false);
         if (label === "Explorer" && onMenuClick) onMenuClick("explorer");
         if (label === "Search" && onSearchClick) onSearchClick();
         if (label === "Find in Files" && onSearchClick) onSearchClick();
+        if (label === "New Terminal" && onMenuClick) onMenuClick("terminal");
     };
+
+    const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
 
     return (
         <div className="relative z-[60] h-9 bg-background text-muted-foreground flex items-center justify-between px-2 text-[13px] select-none shrink-0 w-full border-b border-border" ref={menuRef}>
             <div className="flex items-center space-x-1 h-full">
                 {/* Burger Menu / App Icon area */}
-                <button
-                    onClick={() => { if (onMenuClick) onMenuClick("menu"); }}
-                    className="flex items-center justify-center w-8 h-full mr-1 text-muted-foreground hover:bg-accent hover:text-foreground rounded transition-colors"
-                >
-                    <Menu className="w-4 h-4" />
-                </button>
-                <div className="flex items-center justify-center w-8 h-full mr-2 text-blue-400">
-                    <LayoutTemplate size={16} />
+                <div className="relative h-full flex items-center">
+                    <button
+                        onClick={() => {
+                            // On mobile, show the dropdown menus. On desktop, let layout handle it.
+                            if (window.innerWidth < 768) {
+                                setIsMobileDropdownOpen(!isMobileDropdownOpen);
+                                setActiveMenu(null);
+                            } else {
+                                if (onMenuClick) onMenuClick("menu");
+                            }
+                        }}
+                        className="flex items-center justify-center w-8 h-full mr-1 text-muted-foreground hover:bg-accent hover:text-foreground rounded transition-colors"
+                    >
+                        <Menu className="w-4 h-4" />
+                    </button>
+
+                    {/* Mobile Only Dropdown for Main Menus */}
+                    {isMobileDropdownOpen && (
+                        <div className="md:hidden absolute top-[100%] left-0 z-50 mt-1 min-w-[200px] bg-popover text-popover-foreground border border-border rounded-md shadow-lg py-1">
+                            {MENUS.map((menu) => (
+                                <div
+                                    key={`mobile-${menu.label}`}
+                                    className="px-4 py-2 hover:bg-primary hover:text-primary-foreground cursor-pointer flex justify-between items-center group"
+                                    onClick={() => {
+                                        setActiveMenu(activeMenu === menu.label ? null : menu.label);
+                                    }}
+                                >
+                                    <span>{menu.label}</span>
+                                    {/* Nested submenu for mobile */}
+                                    {activeMenu === menu.label && (
+                                        <div className="absolute left-[100%] top-0 min-w-[200px] bg-popover border border-border rounded-md shadow-lg py-1 ml-1">
+                                            {menu.items.map((item, i) => (
+                                                item.divider ? (
+                                                    <div key={`m-div-${i}`} className="h-[1px] bg-border my-1 mx-2" />
+                                                ) : (
+                                                    <div
+                                                        key={`m-${item.label}`}
+                                                        className="flex items-center justify-between px-4 py-2 hover:bg-primary hover:text-primary-foreground cursor-pointer"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleItemClick(item.label!);
+                                                        }}
+                                                    >
+                                                        <span>{item.label}</span>
+                                                    </div>
+                                                )
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Menu Items */}

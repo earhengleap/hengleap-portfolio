@@ -38,41 +38,67 @@
     /* #f8f8f2 */
     --primary: 326 100% 74%;
     /* #ff79c6 (Pink) */
+    --primary-foreground: 231 15% 18%;
     --muted: 231 15% 25%;
-    --muted-foreground: 225 27% 51%;
-    /* #6272a4 */
-    --border: 231 15% 25%;
+    --muted-foreground: 225 27% 65%;
+    /* lighter #6272a4 */
+    --border: 231 15% 28%;
     --card: 231 15% 15%;
+    --card-foreground: 60 30% 96%;
+    --accent: 265 89% 78%;
+    /* Purple #bd93f9 */
+    --accent-foreground: 231 15% 18%;
   }
 
   /* Matrix / Hacker Theme */
   .theme-matrix {
-    --background: 120 100% 2%;
-    /* Pitch black with green tint */
-    --foreground: 120 100% 40%;
+    --background: 120 100% 1%;
+    /* Very pitch black with green tint */
+    --foreground: 120 100% 45%;
     /* Neon Green */
     --primary: 120 100% 50%;
     /* Bright Neon Green */
-    --muted: 120 100% 6%;
-    --muted-foreground: 120 100% 25%;
+    --primary-foreground: 120 100% 4%;
+    --muted: 120 100% 5%;
+    --muted-foreground: 120 100% 35%;
     /* Darker green */
     --border: 120 100% 15%;
-    --card: 120 100% 4%;
+    --card: 120 100% 3%;
+    --card-foreground: 120 100% 45%;
+    --accent: 120 100% 20%;
+    --accent-foreground: 120 100% 50%;
   }
 
   /* GitHub Dark Theme */
   .theme-github-dark {
     --background: 210 24% 7%;
     /* #0d1117 */
-    --foreground: 212 15% 80%;
+    --foreground: 212 15% 85%;
     /* #c9d1d9 */
     --primary: 212 100% 61%;
     /* #58a6ff (Blue) */
+    --primary-foreground: 210 24% 7%;
     --muted: 210 24% 12%;
-    --muted-foreground: 212 10% 55%;
+    --muted-foreground: 212 10% 60%;
     /* #8b949e */
-    --border: 210 24% 15%;
-    --card: 210 24% 10%;
+    --border: 210 24% 18%;
+    --card: 210 24% 9%;
+    --card-foreground: 212 15% 85%;
+    --accent: 210 24% 15%;
+    --accent-foreground: 212 15% 85%;
+  }
+
+  /* Global HTML Font Size for REM scaling */
+  html.text-size-sm {
+    font-size: 14px;
+  }
+
+  html.text-size-md {
+    font-size: 16px;
+  }
+
+  html.text-size-lg {
+    font-size: 18px;
   }
 
   /* Fonts Variables */
