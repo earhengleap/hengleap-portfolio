@@ -1,34 +1,16 @@
 "use client";
 
-import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect, useState } from "react";
-import { useInView } from "react-intersection-observer";
-import React from "react";
-import Image from "next/image";
-import Loader from "@/components/loading"; // Import the Loader component
+import { useState } from "react";
+import { Download } from "lucide-react";
+import Loader from "@/components/shared/loading"; // Updated path after folder restructure
 
-const AboutPage = () => {
-  const controls = useAnimation();
-  const [ref, inView] = useInView({
-    triggerOnce: false,
-    threshold: 0.2,
-  });
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
+export default function AboutPage() {
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (inView) {
-      controls.start("visible");
-    } else {
-      controls.start("hidden");
-    }
-  }, [controls, inView]);
-
-  // Handle CV download with loading state
   const handleDownloadCV = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate loading time then trigger download
     setTimeout(() => {
       const link = document.createElement("a");
       link.href = "/ear-hengleap-cv.pdf";
@@ -39,205 +21,80 @@ const AboutPage = () => {
       link.click();
       document.body.removeChild(link);
 
-      // Give a little extra time for the download to start before hiding loader
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-    }, 1500);
+      setTimeout(() => setIsLoading(false), 500);
+    }, 1200);
   };
 
-  const headerVariants: Variants = {
-    hidden: { y: -50, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
-      },
-    },
-  };
+  const codeString = `
+/**
+ * @file about.ts
+ * @author HengLeap
+ * @description Developer profile instantiation
+ */
 
-  const imageVariants: Variants = {
-    hidden: { x: -100, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
-      },
-    },
-  };
+import { Developer, Experience, Interest } from '@/types/developer';
 
-  const contentVariants: Variants = {
-    hidden: { x: 100, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
-        staggerChildren: 0.3,
-      },
-    },
-  };
+<span className="token-keyword">export const</span> hengleap<span className="token-keyword">:</span> Developer <span className="token-keyword">=</span> {
+  <span className="token-property">name</span>: <span className="token-string">"Ear Hengleap"</span>,
+  <span className="token-property">age</span>: <span className="token-number">23</span>,
+  <span className="token-property">location</span>: <span className="token-string">"Phnom Penh, Cambodia"</span>,
+  <span className="token-property">title</span>: <span className="token-string">"Software Engineer"</span>,
+  
+  <span className="token-property">bio</span>: <span className="token-string">"I'm a full-stack developer specializing in web and mobile \n         development, with expertise in creating user-centered digital \n         experiences. I also bring UI/UX design skills to my projects, \n         ensuring they're not only functional but also intuitive. \n         With 3 years of experience, I'm constantly exploring new \n         technologies and enhancing my skill set."</span>,
 
-  const itemVariants: Variants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 0.8,
-      },
-    },
-  };
+  <span className="token-property">experience</span>: <span className="token-number">3</span> <span className="token-comment">// Years of professional experience</span>,
+
+  <span className="token-property">interests</span>: [
+    <span className="token-string">"Web Development"</span>,
+    <span className="token-string">"Mobile Development"</span>,
+    <span className="token-string">"UI/UX Design"</span>,
+    <span className="token-string">"New Technologies"</span>
+  ],
+
+  <span className="token-function">downloadResume</span>: <span className="token-keyword">async</span> () <span className="token-keyword">=></span> {
+    <span className="token-keyword">await</span> <span className="token-function">fetch</span>(<span className="token-string">"/ear-hengleap-cv.pdf"</span>);
+    <span className="token-comment">// Click the button below to execute this function</span>
+  }
+};
+  `;
 
   return (
-    <div className="min-h-screen pt-32 px-8 flex justify-center items-center">
-      {isLoading && <Loader />} {/* Show loader when loading */}
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        animate={controls}
-        className="max-w-7xl mx-auto"
-      >
-        {/* Header */}
-        <motion.div
-          variants={headerVariants}
-          className="space-y-4 mb-16 text-center"
-        >
-          <h1 className="text-5xl font-bold">About Me</h1>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: "5rem" }}
-            transition={{ duration: 1.2, delay: 0.5 }}
-            className="h-1.5 bg-blue-600 rounded-full mx-auto"
-          />
-        </motion.div>
+    <div className="h-full flex flex-col font-mono text-sm max-w-4xl mx-auto py-8">
+      {isLoading && <Loader />}
 
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          {/* Left Content - Image */}
-          <motion.div variants={imageVariants}>
-            <div className="relative h-[400px] w-full rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
-              <Image
-                src="/about-me.jpg"
-                alt="About Me"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </motion.div>
-
-          {/* Right Content - Information */}
-          <motion.div variants={contentVariants} className="space-y-8">
-            <motion.h2
-              variants={itemVariants}
-              className="text-3xl font-semibold"
-            >
-              Web & Mobile Developer
-            </motion.h2>
-            <motion.p
-              variants={itemVariants}
-              className="text-gray-600 leading-relaxed"
-            >
-              I&apos;m a full-stack developer specializing in web and mobile
-              development, with expertise in creating user-centered digital
-              experiences. I also bring UI/UX design skills to my projects,
-              ensuring they&apos;re not only functional but also intuitive and
-              engaging. With 3 years of experience, I&apos;m constantly
-              exploring new technologies and enhancing my skill set.
-            </motion.p>
-
-            <motion.div
-              variants={itemVariants}
-              className="grid grid-cols-2 gap-8"
-            >
-              <div>
-                <h3 className="font-semibold mb-4">Personal Info</h3>
-                <ul className="space-y-4">
-                  {[
-                    { label: "Name", value: "Hengleap" },
-                    { label: "Age", value: "23 Years" },
-                    { label: "Location", value: "Cambodia, PP" },
-                    { label: "Experience", value: "3 Years" },
-                  ].map((item, index) => (
-                    <motion.li
-                      key={index}
-                      variants={itemVariants}
-                      custom={index}
-                      whileHover={{ x: 5 }}
-                    >
-                      <span className="text-gray-600">{item.label}:</span>{" "}
-                      <p className="font-medium">{item.value}</p>
-                    </motion.li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-4">Interests</h3>
-                <ul className="space-y-4">
-                  {[
-                    "Web Development",
-                    "Mobile Development",
-                    "UI/UX Design",
-                    "New Technologies",
-                  ].map((interest, index) => (
-                    <motion.li
-                      key={index}
-                      variants={itemVariants}
-                      custom={index}
-                      whileHover={{ x: 5 }}
-                      className="text-gray-600"
-                    >
-                      {interest}
-                    </motion.li>
-                  ))}
-                </ul>
-              </div>
-            </motion.div>
-
-            {/* Download CV button with loading functionality */}
-            <motion.div variants={itemVariants}>
-              <motion.button
-                onClick={handleDownloadCV}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gray-900 text-white px-8 py-4 rounded-full hover:bg-gray-800 transition-colors flex items-center gap-2"
-              >
-                <span>Download CV</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                  />
-                </svg>
-              </motion.button>
-            </motion.div>
-          </motion.div>
+      <div className="flex-1 bg-[#1e1e1e] rounded-lg border border-[#333] overflow-hidden shadow-2xl">
+        {/* Editor Header */}
+        <div className="bg-[#2d2d2d] px-4 py-2 border-b border-[#333] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-400 font-bold">TS</span>
+            <span className="text-gray-300">about.ts</span>
+          </div>
+          <button
+            onClick={handleDownloadCV}
+            className="flex items-center gap-2 text-xs bg-primary/20 text-primary hover:bg-primary hover:text-white px-3 py-1 rounded transition-colors"
+          >
+            <Download className="w-3 h-3" />
+            Execute downloadResume()
+          </button>
         </div>
-      </motion.div>
+
+        {/* Code Content */}
+        <div className="p-4 overflow-auto flex">
+          {/* Line Numbers */}
+          <div className="text-[#5c6370] pr-4 select-none text-right flex flex-col min-w-[2.5rem] border-r border-[#333] mr-4">
+            {codeString.split('\n').map((_, i) => (
+              <span key={i}>{i + 1}</span>
+            ))}
+          </div>
+
+          {/* Syntax Highlighted Code */}
+          <pre className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+            <code
+              dangerouslySetInnerHTML={{ __html: codeString }}
+            />
+          </pre>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default AboutPage;
+}

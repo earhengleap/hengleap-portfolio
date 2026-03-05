@@ -1,438 +1,120 @@
-// app/(root)/(home)/page.tsx
-
 "use client";
 
-import { Send, Linkedin, Github } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
-import { motion, useScroll, Variants } from "framer-motion";
-import React, { useState } from "react";
-import AboutSection from "../about/page";
-import SkillsSection from "../skills/page";
-import ServicesPage from "../services/page";
-import ContactPage from "../contact/page";
-import ScrollToTop from "@/components/scroll-to-top";
-import PortfolioPage from "../porfolio/page";
-import { ParallaxText } from "./_components/parallax-text";
-import { AnimatedSection } from "./_components/animated-section";
-import { SplitAnimation } from "./_components/split-animation";
-import Loader from "@/components/loading";
-import { Button } from "@/components/ui/button";
-import Footer from "@/components/footer";
+import { Terminal, Code2, Cpu, UserCircle, FolderGit2 } from "lucide-react";
 
-const HomePage = () => {
-  const { scrollYProgress } = useScroll();
-  const [isLoading, setIsLoading] = useState(false);
+const BOOT_SEQUENCE = [
+  "Initializing Codex Coder v2.0.4...",
+  "Loading kernel modules...................[OK]",
+  "Mounting root filesystem.................[OK]",
+  "Starting network interface...............[OK]",
+  "Connecting to HengLeap's neural net......[OK]",
+  "Loading portfolio data...................",
+  "SUCCESS: System Ready."
+];
 
-  const handleSocialClick = (href: string) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      window.location.href = href;
-    }, 1500);
-  };
+export default function HomePage() {
+  const [lines, setLines] = useState<string[]>([]);
+  const [isBooted, setIsBooted] = useState(false);
 
-  const profileVariants: Variants = {
-    hidden: {
-      scale: 0.8,
-      opacity: 0,
-    },
-    visible: {
-      scale: 1,
-      opacity: 1,
-      transition: {
-        duration: 1,
-        ease: "easeOut",
-      },
-    },
-  };
-
-  const socialVariants: Variants = {
-    hidden: { x: -25, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut",
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const contentVariants: Variants = {
-    hidden: { x: 25, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut",
-        staggerChildren: 0.15,
-      },
-    },
-  };
+  useEffect(() => {
+    let delay = 0;
+    BOOT_SEQUENCE.forEach((line, index) => {
+      delay += Math.random() * 300 + 200; // Random delay between 200-500ms
+      setTimeout(() => {
+        setLines((prev) => [...prev, line]);
+        if (index === BOOT_SEQUENCE.length - 1) {
+          setTimeout(() => setIsBooted(true), 600);
+        }
+      }, delay);
+    });
+  }, []);
 
   return (
-    <main className="flex flex-col w-full">
-      {isLoading && <Loader />}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 origin-left z-50"
-        style={{ scaleX: scrollYProgress }}
-      />
-
-      {/* Hero Section */}
-      <section
-        id="homeSection"
-        className="min-h-screen relative flex items-center py-16 sm:py-20 bg-white"
-      >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <SplitAnimation>
-            {/* Profile Image and Social Links */}
-            <motion.div variants={profileVariants} className="relative w-full">
-              <div className="relative aspect-[3/4] md:aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
-                <Image
-                  src="/my-profile.jpg"
-                  alt="Profile Picture"
-                  fill
-                  style={{ objectFit: "cover" }}
-                  className="w-full h-full transform hover:scale-105 transition-transform duration-700"
-                  priority
-                />
-              </div>
-
-              {/* Social Links */}
-              <motion.div
-                variants={socialVariants}
-                className="absolute -left-4 top-1/2 -translate-y-1/2 flex flex-col space-y-4 z-10"
-              >
-                {[
-                  {
-                    icon: Send,
-                    href: "https://t.me/imxingg",
-                    label: "Telegram",
-                    color: "hover:text-pink-600",
-                  },
-                  {
-                    icon: Linkedin,
-                    href: "https://linkedin.com/in/earhengleap",
-                    label: "Linkedin",
-                    color: "hover:text-pink-500",
-                  },
-                  {
-                    icon: Github,
-                    href: "https://github.com/earhengleap",
-                    label: "Github",
-                    color: "hover:text-gray-900",
-                  },
-                ].map((social, index) => (
-                  <motion.div
-                    key={index}
-                    whileHover={{ scale: 1.1, x: 5 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="relative group"
-                  >
-                    <Link
-                      href={social.href}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSocialClick(social.href);
-                      }}
-                      className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 relative z-10"
-                      aria-label={social.label}
-                    >
-                      <social.icon
-                        className={`h-5 w-5 sm:h-6 sm:w-6 text-gray-700 ${social.color} transition-colors duration-300`}
-                      />
-                      <span className="absolute left-full ml-4 bg-white px-3 py-1 rounded-md shadow-md text-sm font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300 whitespace-nowrap pointer-events-none">
-                        {social.label}
-                      </span>
-                    </Link>
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-20 rounded-full transition-opacity duration-300" />
-                  </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            {/* Content Section */}
+    <div className="h-full flex flex-col font-mono text-sm max-w-4xl mx-auto">
+      <div className="flex-1 flex flex-col justify-center">
+        {/* Boot Sequence */}
+        <div className="mb-8 space-y-1">
+          {lines.map((line, i) => (
             <motion.div
-              variants={contentVariants}
-              className="flex flex-col space-y-8 lg:space-y-10"
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={line.includes("SUCCESS") || line.includes("[OK]") ? "text-primary" : "text-gray-400"}
             >
-              <motion.div variants={contentVariants} className="space-y-6">
-                {/* Name */}
-                <motion.div className="relative">
-                  <motion.h1
-                    variants={{
-                      hidden: { opacity: 0, y: 20 },
-                      visible: { opacity: 1, y: 0 },
-                    }}
-                    className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight"
-                  >
-                    <motion.span
-                      className="inline-block text-black"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 1 }}
-                    >
-                      HengLeap
-                    </motion.span>
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{
-                        opacity: 1,
-                        x: 0,
-                        rotate: [0, -5, 5, -5, 0],
-                      }}
-                      transition={{
-                        opacity: { duration: 0.5, delay: 1 },
-                        rotate: {
-                          duration: 2,
-                          repeat: Infinity,
-                          repeatDelay: 4,
-                          ease: "easeInOut",
-                        },
-                      }}
-                      className="inline-block ml-3 text-4xl sm:text-5xl"
-                    >
-                      👋
-                    </motion.span>
-                  </motion.h1>
-                </motion.div>
-
-                {/* Role */}
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                  className="relative h-12"
-                >
-                  <motion.p
-                    className="text-2xl sm:text-3xl lg:text-4xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-gray-700 to-gray-900"
-                    animate={{
-                      opacity: [0, 1, 1, 0],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      times: [0, 0.2, 0.8, 1],
-                    }}
-                  >
-                    Software Engineer
-                  </motion.p>
-                </motion.div>
-
-                {/* Description */}
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                  className="relative max-w-lg"
-                >
-                  <motion.div
-                    className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-blue-600 to-purple-600"
-                    initial={{ height: 0 }}
-                    animate={{ height: "100%" }}
-                    transition={{ duration: 1, delay: 0.5 }}
-                  />
-                  <motion.p className="text-lg sm:text-xl text-gray-600 leading-relaxed pl-4">
-                    I&apos;m a passionate Software Engineer based in Cambodia,
-                    specializing in creating exceptional digital experiences.
-                    With a focus on innovation and clean code, I transform ideas
-                    into reality.
-                  </motion.p>
-                </motion.div>
-
-                {/* CTA Button */}
-                {/* CTA Button */}
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                  className="mt-8"
-                >
-                  <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 25,
-                    }}
-                    className="w-fit"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className="group relative bg-transparent hover:bg-black/5 rounded-full px-8 py-4 text-base border-2 border-black/80 transition-all duration-300 min-w-[160px] overflow-hidden"
-                      onClick={() => {
-                        document
-                          .getElementById("contactSection")
-                          ?.scrollIntoView({ behavior: "smooth" });
-                      }}
-                    >
-                      <motion.span
-                        className="flex items-center justify-center gap-2 text-black w-full"
-                        initial={{ gap: "8px" }}
-                        whileHover={{ gap: "12px" }}
-                        transition={{
-                          duration: 0.3,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        Let&apos;s Talk
-                        <div className="relative">
-                          <motion.div
-                            initial={{ x: 0 }}
-                            animate={{
-                              x: [0, 5, 0],
-                            }}
-                            transition={{
-                              duration: 1.5,
-                              repeat: Infinity,
-                              repeatType: "reverse",
-                              ease: "easeInOut",
-                            }}
-                            className="relative"
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="text-black transform rotate-[-45deg]"
-                            >
-                              <path
-                                d="M1 8H15M15 8L8 1M15 8L8 15"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                            <div className="absolute -bottom-1 left-0 w-full h-[1.5px] bg-black"></div>
-                          </motion.div>
-                        </div>
-                      </motion.span>
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              </motion.div>
+              <span className="text-blue-400 mr-2">➜</span>
+              {line}
             </motion.div>
-          </SplitAnimation>
-        </div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.6 }}
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2"
-        >
-          <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center pt-2">
+          ))}
+          {!isBooted && (
             <motion.div
-              className="w-1.5 h-3 bg-gray-400 rounded-full"
-              animate={{
-                y: [0, 8, 0],
-                opacity: [1, 0.5, 1],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
+              animate={{ opacity: [1, 0, 1] }}
+              transition={{ repeat: Infinity, duration: 0.8 }}
+              className="inline-block w-2 h-4 bg-gray-400 ml-2"
             />
-          </div>
-          <span className="text-sm text-gray-400 font-medium">Scroll down</span>
-        </motion.div>
-      </section>
-
-      {/* Main Content Sections */}
-      <div className="w-full">
-        {/* About Section */}
-        <section
-          id="aboutSection"
-          className="relative min-h-screen py-24 bg-gray-50"
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-            <AnimatedSection direction="left">
-              <AboutSection />
-            </AnimatedSection>
-          </div>
-        </section>
-        {/* Skills Section */}
-        <section
-          id="skillsSection"
-          className="relative min-h-screen py-24 bg-white"
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-            <AnimatedSection direction="right">
-              <SkillsSection />
-            </AnimatedSection>
-          </div>
-        </section>
-
-        {/* Services Section */}
-        <section
-          id="servicesSection"
-          className="relative min-h-screen py-24 bg-gray-50"
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-            <AnimatedSection direction="left">
-              <ServicesPage />
-            </AnimatedSection>
-          </div>
-        </section>
-
-        <section className="py-16 bg-gradient-to-b">
-          <div className="relative overflow-hidden">
-            {/* Optional overlay effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white z-10 pointer-events-none"></div>
-            <ParallaxText baseVelocity={-5}>Portfolio Showcase</ParallaxText>
-            <ParallaxText baseVelocity={5}>Creative Works</ParallaxText>
-          </div>
-        </section>
-
-        {/* Portfolio Section */}
-        <section
-          id="portfolioSection"
-          className="relative min-h-screen py-24 bg-white"
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-            <AnimatedSection direction="right">
-              <PortfolioPage />
-            </AnimatedSection>
-          </div>
-        </section>
-
-        {/* Contact Section */}
-        <section
-          id="contactSection"
-          className="relative min-h-screen py-24 bg-gray-50"
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-            <AnimatedSection direction="left">
-              <ContactPage />
-            </AnimatedSection>
-          </div>
-        </section>
-
-        {/* Floating Elements */}
-        <div className="fixed bottom-28 right-8 z-50">
-          <ScrollToTop />
+          )}
         </div>
-      </div>
-      <Footer />
-    </main>
-  );
-};
 
-export default HomePage;
+        {/* Welcome Dashboard */}
+        {isBooted && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="border border-[#333] bg-[#1e1e1e]/80 rounded-lg overflow-hidden backdrop-blur-sm shadow-2xl"
+          >
+            <div className="bg-[#2d2d2d] px-4 py-2 border-b border-[#333] flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-300 font-semibold cursor-default">Welcome to HengLeap&apos;s Workspace</span>
+            </div>
+
+            <div className="p-6 md:p-8">
+              <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                <div className="flex-1 space-y-4">
+                  <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
+                    <span className="text-primary">const</span> developer = <span className="text-blue-400">"HengLeap"</span>;
+                  </h1>
+                  <p className="text-gray-400 text-lg">
+                    Software Engineer • Problem Solver • Tech Enthusiast
+                  </p>
+
+                  <div className="flex flex-wrap gap-4 pt-4">
+                    <QuickLink href="/about" icon={UserCircle} text="about.ts" color="text-yellow-400" />
+                    <QuickLink href="/projects" icon={FolderGit2} text="projects.json" color="text-green-400" />
+                    <QuickLink href="/skills" icon={Cpu} text="skills.md" color="text-purple-400" />
+                    <QuickLink href="/contact" icon={Code2} text="contact.sh" color="text-orange-400" />
+                  </div>
+                </div>
+
+                {/* ASCII Art or Logo representation could go here */}
+                <div className="hidden md:flex bg-black/40 p-6 rounded-lg border border-[#333] text-primary whitespace-pre font-mono text-xs shadow-inner">
+                  {`
+   ____          __         
+  / __/    __   / /_  ____  
+ / /_     / /_ / __/ / __/  
+/ /_/__  / __// /_  / /_    
+\____//_/\__/ \__/  \__/    
+                  `}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuickLink({ href, icon: Icon, text, color }: { href: string; icon: any; text: string; color: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2 px-4 py-2 border border-[#333] rounded-md hover:bg-[#2d2d2d] transition-colors group"
+    >
+      <Icon className={`w-4 h-4 ${color} group-hover:scale-110 transition-transform`} />
+      <span className="text-gray-300 group-hover:text-white transition-colors">{text}</span>
+    </Link>
+  );
+}

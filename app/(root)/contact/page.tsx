@@ -1,254 +1,184 @@
-// app/(root)/contact/page.tsx
-
 "use client";
 
-import { Mail, Phone, MapPin, Send } from "lucide-react";
-import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect, useState, FormEvent } from "react";
-import { useInView } from "react-intersection-observer";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-const ContactPage = () => {
+type TerminalLine = {
+  type: 'system' | 'input' | 'error' | 'success';
+  text: string;
+};
+
+export default function ContactPage() {
+  const [lines, setLines] = useState<TerminalLine[]>([
+    { type: 'system', text: 'Initializing secure connection...' },
+    { type: 'system', text: 'Establishing handshake...' },
+    { type: 'system', text: 'Connection encrypted. Waiting for input.' },
+    { type: 'system', text: '----------------------------------------' },
+    { type: 'system', text: 'To send a message, please provide the requested details.' }
+  ]);
+
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [currentInput, setCurrentInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const controls = useAnimation();
-  const [ref, inView] = useInView({
-    triggerOnce: false,
-    threshold: 0.1,
-  });
+  const endOfTerminalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (inView) {
-      controls.start("visible");
-    } else {
-      controls.start("hidden");
-    }
-  }, [controls, inView]);
+    endOfTerminalRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [lines, currentInput]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  useEffect(() => {
+    // Keep focus on input
+    const handleClick = () => inputRef.current?.focus();
+    document.addEventListener("click", handleClick);
+    inputRef.current?.focus();
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
+
+  const handleInputSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || !currentInput.trim()) return;
+
+    const val = currentInput.trim();
+    setCurrentInput("");
+
+    if (step === 0) {
+      setLines(p => [...p, { type: 'input', text: `> Name: ${val}` }]);
+      setName(val);
+      setStep(1);
+    } else if (step === 1) {
+      setLines(p => [...p, { type: 'input', text: `> Email: ${val}` }]);
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        setEmail(val);
+        setStep(2);
+      } else {
+        setLines(p => [...p, { type: 'error', text: 'Invalid email format. Try again.' }]);
+      }
+    } else if (step === 2) {
+      setLines(p => [...p, { type: 'input', text: `> Subject: ${val}` }]);
+      setSubject(val);
+      setStep(3);
+    } else if (step === 3) {
+      setLines(p => [...p, { type: 'input', text: `> Message: ${val}` }]);
+      setMessage(val);
+      setStep(4);
+
+      // Auto submit
+      submitForm(name, email, subject, val);
+    }
+  };
+
+  const submitForm = async (n: string, e: string, s: string, m: string) => {
     setIsSubmitting(true);
+    setLines(p => [...p, { type: 'system', text: 'Encrypting payload...' }, { type: 'system', text: 'Transmitting data...' }]);
 
     try {
       const response = await fetch("/api/send", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          subject,
-          message,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: n, email: e, subject: s, message: m }),
       });
 
       if (response.ok) {
-        toast.success("Message sent successfully!");
-        // Reset form
-        setName("");
-        setEmail("");
-        setSubject("");
-        setMessage("");
+        setLines(p => [...p, { type: 'success', text: 'Transmission successful. Message delivered.' }]);
+        toast.success("Message sent securely!");
       } else {
-        toast.error("Failed to send message. Please try again.");
+        setLines(p => [...p, { type: 'error', text: 'Transmission failed. Destination unreachable.' }]);
+        toast.error("Failed to send message.");
       }
     } catch (err) {
-      console.error("Form submission error:", err);
-      toast.error("An error occurred. Please try again.");
+      setLines(p => [...p, { type: 'error', text: 'Critical error during transmission.' }]);
+      toast.error("An error occurred.");
     }
 
     setIsSubmitting(false);
+    // Reset to let them send another message if desired
+    setTimeout(() => {
+      setLines(p => [...p, { type: 'system', text: '----------------------------------------' }, { type: 'system', text: 'Session reset. Ready for new input.' }]);
+      setStep(0);
+      setName(""); setEmail(""); setSubject(""); setMessage("");
+    }, 2000);
   };
 
-  const headerVariants: Variants = {
-    hidden: {
-      opacity: 0,
-      y: -30,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: [0.6, -0.05, 0.01, 0.99],
-      },
-    },
-  };
-
-  const contactInfoVariants: Variants = {
-    hidden: {
-      opacity: 0,
-      x: -50,
-    },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.8,
-        ease: [0.6, -0.05, 0.01, 0.99],
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const formVariants: Variants = {
-    hidden: {
-      opacity: 0,
-      x: 50,
-    },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.8,
-        ease: [0.6, -0.05, 0.01, 0.99],
-      },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-      },
-    },
+  const getPrompt = () => {
+    switch (step) {
+      case 0: return "> Name: ";
+      case 1: return "> Email: ";
+      case 2: return "> Subject: ";
+      case 3: return "> Message: ";
+      default: return "> ";
+    }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-20" ref={ref}>
-      <motion.div
-        initial="hidden"
-        animate={controls}
-        variants={headerVariants}
-        className="text-center mb-16"
-      >
-        <h2 className="text-3xl font-bold mb-4">Get In Touch</h2>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: "5rem" }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="h-1.5 bg-gray-900 rounded-full mx-auto mb-4"
-        />
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Feel free to reach out if you want to collaborate with me, or simply
-          have a chat
-        </p>
-      </motion.div>
+    <div className="h-full flex flex-col font-mono text-sm max-w-4xl mx-auto py-8">
+      <div className="flex-1 bg-black rounded-lg border border-[#333] overflow-hidden shadow-2xl flex flex-col">
+        {/* Terminal Header */}
+        <div className="bg-[#1a1b26] px-4 py-2 border-b border-[#333] flex items-center justify-between">
+          <div className="flex items-center gap-2 text-gray-400">
+            <span className="w-3 h-3 rounded-full bg-red-500"></span>
+            <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+            <span className="w-3 h-3 rounded-full bg-green-500"></span>
+            <span className="ml-2 font-semibold">secure_shell.exe</span>
+          </div>
+          <div className="text-xs text-green-500 flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            CONNECTED
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-        <motion.div
-          initial="hidden"
-          animate={controls}
-          variants={contactInfoVariants}
-          className="space-y-8"
-        >
-          <motion.div
-            variants={itemVariants}
-            className="flex items-start space-x-4"
-          >
-            <Mail className="h-6 w-6 mt-1 text-gray-900" />
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Email</h3>
-              <p className="text-gray-600">hengleap70@gmail.com</p>
+        {/* Terminal Body */}
+        <div className="p-6 overflow-auto flex-1 text-green-500" onClick={() => inputRef.current?.focus()}>
+          {lines.map((line, i) => (
+            <div key={i} className={`mb-2 leading-relaxed tracking-wider ${line.type === 'error' ? 'text-red-500' :
+              line.type === 'success' ? 'text-blue-400 font-bold' :
+                line.type === 'input' ? 'text-white' : 'text-green-500'
+              }`}>
+              {line.text}
             </div>
-          </motion.div>
+          ))}
 
-          <motion.div
-            variants={itemVariants}
-            className="flex items-start space-x-4"
-          >
-            <Phone className="h-6 w-6 mt-1 text-gray-900" />
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Phone</h3>
-              <p className="text-gray-600">(+855) 78 231 215</p>
+          {step < 4 && !isSubmitting && (
+            <form onSubmit={handleInputSubmit} className="flex relative items-center text-white mt-4">
+              <span className="mr-2 text-green-500">{getPrompt()}</span>
+              <input
+                ref={inputRef}
+                type="text"
+                value={currentInput}
+                onChange={(e) => setCurrentInput(e.target.value)}
+                className="flex-1 bg-transparent outline-none border-none text-white caret-transparent"
+                autoFocus
+                autoComplete="off"
+                spellCheck="false"
+              />
+              <span
+                className="w-2.5 h-5 bg-green-500 inline-block animate-[pulse_1s_infinite] absolute"
+                style={{
+                  left: `calc(${getPrompt().length}ch + ${currentInput.length}ch + 0.5rem)`,
+                }}
+              ></span>
+            </form>
+          )}
+
+          {isSubmitting && (
+            <div className="mt-4 flex items-center gap-2 text-green-500">
+              <span>Processing</span>
+              <span className="flex gap-1">
+                <span className="animate-bounce delay-75">.</span>
+                <span className="animate-bounce delay-150">.</span>
+                <span className="animate-bounce delay-300">.</span>
+              </span>
             </div>
-          </motion.div>
+          )}
 
-          <motion.div
-            variants={itemVariants}
-            className="flex items-start space-x-4"
-          >
-            <MapPin className="h-6 w-6 mt-1 text-gray-900" />
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Location</h3>
-              <p className="text-gray-600">Phnom Penh City, Cambodia</p>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        <motion.form
-          onSubmit={handleSubmit}
-          initial="hidden"
-          animate={controls}
-          variants={formVariants}
-          className="space-y-6"
-        >
-          <motion.div
-            variants={itemVariants}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-          >
-            <motion.input
-              whileFocus={{ scale: 1.02 }}
-              type="text"
-              placeholder="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
-            />
-            <motion.input
-              whileFocus={{ scale: 1.02 }}
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
-            />
-          </motion.div>
-          <motion.input
-            variants={itemVariants}
-            whileFocus={{ scale: 1.02 }}
-            type="text"
-            placeholder="Subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
-          />
-          <motion.textarea
-            variants={itemVariants}
-            whileFocus={{ scale: 1.02 }}
-            placeholder="Message"
-            rows={6}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
-          />
-          <motion.button
-            variants={itemVariants}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-gray-900 text-white px-8 py-3 rounded-lg flex items-center space-x-2 hover:bg-gray-800 transition-colors disabled:opacity-50"
-          >
-            <span>{isSubmitting ? "Sending..." : "Send Message"}</span>
-            <Send className="h-4 w-4" />
-          </motion.button>
-        </motion.form>
+          <div ref={endOfTerminalRef} className="h-4" />
+        </div>
       </div>
     </div>
   );
-};
-
-export default ContactPage;
+}

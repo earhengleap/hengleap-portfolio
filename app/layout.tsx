@@ -1,21 +1,21 @@
 // app/layout.tsx
 
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/components/auth-provider";
+import React, { ReactNode } from "react";
+import { AuthProvider } from "@/components/providers/auth-provider";
 import { Toaster } from "react-hot-toast";
-import { CrispProvider } from "@/components/crisp-provider";
 
-const poppins = Poppins({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-poppins",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Xing",
-  description: "A developer portfolio website",
+  title: "Xing | Codex Coder",
+  description: "A professional developer portfolio mimicking a code editor",
 };
 
 export default function RootLayout({
@@ -25,9 +25,8 @@ export default function RootLayout({
 }>) {
   return (
     <AuthProvider>
-      <html lang="en">
-        <CrispProvider />
-        <body className={`${poppins.variable} antialiased`}>
+      <html lang="en" className="dark">
+        <body className={`${jetbrainsMono.variable} font-mono antialiased bg-background text-foreground h-screen overflow-hidden`}>
           <script
             type="module"
             defer

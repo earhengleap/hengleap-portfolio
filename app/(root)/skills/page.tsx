@@ -1,327 +1,132 @@
 "use client";
 
-import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect } from "react";
-import { useInView } from "react-intersection-observer";
+import { useState } from "react";
+import React from "react";
 
-interface SkillItem {
-  name: string;
-  level: number;
-}
-
-interface SkillSet {
-  category: string;
-  items: SkillItem[];
-}
-
-interface SkillCategoryProps {
-  skillSet: SkillSet;
-  variants: Variants;
-}
-
-const SkillsPage = () => {
-  const controls = useAnimation();
-  const [ref, inView] = useInView({
-    triggerOnce: false,
-    threshold: 0.2,
-  });
-
-  useEffect(() => {
-    if (inView) {
-      controls.start("visible");
-    } else {
-      controls.start("hidden");
-    }
-  }, [controls, inView]);
-
-  const headerVariants: Variants = {
-    hidden: { y: -50, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
-      },
-    },
-  };
-
-  const leftColumnVariants: Variants = {
-    hidden: { x: -100, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
-        staggerChildren: 0.3,
-      },
-    },
-  };
-
-  const middleColumnVariants: Variants = {
-    hidden: { y: 100, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
-        staggerChildren: 0.3,
-      },
-    },
-  };
-
-  const rightColumnVariants: Variants = {
-    hidden: { x: 100, opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        damping: 20,
-        stiffness: 80,
-        duration: 1.2,
-        staggerChildren: 0.3,
-      },
-    },
-  };
-
-  const skillBarVariants: Variants = {
-    hidden: { width: 0, opacity: 0 },
-    visible: (level: number) => ({
-      width: `${level}%`,
-      opacity: 1,
-      transition: {
-        duration: 1.2,
-        ease: "easeInOut",
-        delay: 0.4,
-      },
-    }),
-  };
-
-  const skills: SkillSet[] = [
-    {
-      category: "Web Development",
-      items: [
-        { name: "HTML/CSS", level: 85 },
-        { name: "JavaScript/TypeScript", level: 80 },
-        { name: "React.js", level: 80 },
-        { name: "Next.js", level: 85 },
-        { name: "Tailwind CSS", level: 75 },
-        { name: "Node/Express", level: 75 },
-      ],
-    },
-    {
-      category: "Database & Backend",
-      items: [
-        { name: "Node.js", level: 75 },
-        { name: "PostgreSQL", level: 75 },
-        { name: "MongoDB", level: 60 },
-        { name: "Express.js", level: 75 },
-        { name: "REST APIs", level: 65 },
-      ],
-    },
-    {
-      category: "Mobile Development",
-      items: [
-        { name: "Flutter", level: 75 },
-        { name: "Java/Android", level: 80 },
-        { name: "Dart", level: 85 },
-        { name: "Mobile UI", level: 85 },
-        { name: "Native Android", level: 58 },
-      ],
-    },
-    {
-      category: "UI/UX Design",
-      items: [
-        { name: "Figma", level: 80 },
-        { name: "Adobe XD", level: 50 },
-        // { name: "Wireframing", level: 80 },
-        { name: "User Research", level: 65 },
-      ],
-    },
-  ];
-
-  // const otherSkills: string[] = [
-  //   "Docker",
-  //   "Kubernetes",
-  //   "AWS Services",
-  //   "CI/CD Pipelines",
-  //   "Jest Testing",
-  //   "Redux Toolkit",
-  //   "Material UI",
-  //   "Socket.IO",
-  //   "Redis",
-  //   "TypeORM",
-  //   "Prisma",
-  //   "Git & GitHub",
-  //   "Microservices",
-  //   "Web Security",
-  //   "Performance Optimization",
-  //   "AWS Lambda",
-  //   "Serverless",
-  //   "Firebase",
-  //   "Vercel",
-  //   "Netlify",
-  //   "Database Optimization",
-  //   "API Design",
-  //   "System Architecture",
-  //   "Cloud Infrastructure",
-  //   "DevOps Practices",
-  //   "Agile Methodologies",
-  // ];
-
-  const otherSkills: string[] = ["Under Development... <3"];
-
-  return (
-    <div className="min-h-screen pt-32 px-8 bg-white dark:bg-gray-900">
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        animate={controls}
-        className="max-w-7xl mx-auto"
-      >
-        {/* Header */}
-        <motion.div variants={headerVariants} className="space-y-4 mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
-            My Skills
-          </h1>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: "5rem" }}
-            transition={{ duration: 1.2, delay: 0.5 }}
-            className="h-1.5 bg-blue-600 rounded-full"
-          />
-          <p className="text-gray-600 dark:text-gray-300 max-w-2xl">
-            As a full-stack developer, I specialize in modern web development,
-            with expertise in both frontend and backend technologies. I have
-            extensive experience with Node.js and various database systems,
-            allowing me to build scalable, performant applications from start to
-            finish.
-          </p>
-        </motion.div>
-
-        {/* Skills Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <motion.div
-            variants={leftColumnVariants}
-            className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-lg"
-          >
-            <SkillCategory skillSet={skills[0]} variants={skillBarVariants} />
-          </motion.div>
-
-          <motion.div
-            variants={middleColumnVariants}
-            className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-lg"
-          >
-            <SkillCategory skillSet={skills[1]} variants={skillBarVariants} />
-          </motion.div>
-
-          <motion.div
-            variants={rightColumnVariants}
-            className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-lg"
-          >
-            <SkillCategory skillSet={skills[2]} variants={skillBarVariants} />
-          </motion.div>
-
-          <motion.div
-            variants={rightColumnVariants}
-            className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl shadow-lg"
-          >
-            <SkillCategory skillSet={skills[3]} variants={skillBarVariants} />
-          </motion.div>
-        </div>
-
-        {/* Additional Skills */}
-        <motion.div variants={middleColumnVariants} className="mt-20">
-          <h2 className="text-2xl font-semibold mb-8 text-gray-900 dark:text-white">
-            Other Technologies & Tools
-          </h2>
-          <motion.div
-            variants={middleColumnVariants}
-            className="flex flex-wrap gap-4"
-          >
-            {otherSkills.map((skill, index) => (
-              <motion.span
-                key={index}
-                variants={{
-                  hidden: { opacity: 0, scale: 0.8, y: 20 },
-                  visible: {
-                    opacity: 1,
-                    scale: 1,
-                    y: 0,
-                    transition: {
-                      delay: index * 0.15,
-                      type: "spring",
-                      damping: 15,
-                      stiffness: 80,
-                      duration: 1.2,
-                    },
-                  },
-                }}
-                whileHover={{
-                  scale: 1.05,
-                  backgroundColor: "#3B82F6",
-                  color: "white",
-                  transition: { duration: 0.3 },
-                }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-medium cursor-pointer text-gray-800 dark:text-gray-200 hover:shadow-md transition-all duration-300"
-              >
-                {skill}
-              </motion.span>
-            ))}
-          </motion.div>
-        </motion.div>
-      </motion.div>
-    </div>
-  );
+const skillsData = {
+  name: "hengleap-portfolio",
+  version: "1.0.0",
+  description: "Full-stack developer skills and dependencies",
+  main: "index.js",
+  scripts: {
+    start: "node server.js",
+    dev: "next dev",
+    build: "next build",
+    test: "echo \"Error: no test specified\" && exit 1"
+  },
+  dependencies: {
+    "html-css": "^85.0.0",
+    "javascript-typescript": "^80.0.0",
+    "react.js": "^80.0.0",
+    "next.js": "^85.0.0",
+    "tailwind-css": "^75.0.0",
+    "node-express": "^75.0.0"
+  },
+  devDependencies: {
+    "postgresql": "^75.0.0",
+    "mongodb": "^60.0.0",
+    "rest-apis": "^65.0.0"
+  },
+  peerDependencies: {
+    "flutter": "^75.0.0",
+    "java-android": "^80.0.0",
+    "dart": "^85.0.0",
+    "mobile-ui": "^85.0.0",
+    "native-android": "^58.0.0"
+  },
+  optionalDependencies: {
+    "figma": "^80.0.0",
+    "adobe-xd": "^50.0.0",
+    "user-research": "^65.0.0",
+    "docker": "beta",
+    "aws-services": "beta"
+  },
+  author: "Ear Hengleap",
+  license: "ISC"
 };
 
-const SkillCategory: React.FC<SkillCategoryProps> = ({
-  skillSet,
-  variants,
-}) => {
+export default function SkillsPage() {
+  const [hoveredLine, setHoveredLine] = useState<number | null>(null);
+
+  // Generate the formatted JSON string with specific interactive markers
+  const renderJsonValue = (value: any, indent: number = 1, lineIndex: { current: number }): React.ReactNode => {
+    if (typeof value === 'string') {
+      return <span className="text-[#98c379]">"{value}"</span>;
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      const entries = Object.entries(value);
+      const isObjectEmpty = entries.length === 0;
+
+      if (isObjectEmpty) return <span className="text-gray-300">&#123; &#125;</span>;
+
+      return (
+        <span className="text-gray-300">
+          &#123;
+          {entries.map(([k, v], i) => {
+            lineIndex.current += 1;
+            const currentIdx = lineIndex.current;
+            return (
+              <div
+                key={k}
+                className={`pl-${indent * 4} py-0.5 transition-colors ${hoveredLine === currentIdx ? 'bg-[#2a2d3e]/50 rounded' : ''}`}
+                onMouseEnter={() => setHoveredLine(currentIdx)}
+                onMouseLeave={() => setHoveredLine(null)}
+              >
+                <span className="text-[#e06c75]">"{k}"</span>: {renderJsonValue(v, indent + 1, lineIndex)}
+                {i < entries.length - 1 ? "," : ""}
+              </div>
+            );
+          })}
+          <div className={`pl-${(indent - 1) * 4}`}>&#125;</div>
+        </span>
+      );
+    }
+    return <span className="text-[#d19a66]">{JSON.stringify(value)}</span>;
+  };
+
+  const lineIndex = { current: 1 };
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-        {skillSet.category}
-      </h2>
-      <div className="space-y-6">
-        {skillSet.items.map((skill, index) => (
-          <motion.div
-            key={index}
-            initial="hidden"
-            animate="visible"
-            className="space-y-2"
-          >
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-800 dark:text-gray-200">
-                {skill.name}
-              </span>
-              <span className="text-gray-600 dark:text-gray-400">
-                {skill.level}%
-              </span>
-            </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <motion.div
-                custom={skill.level}
-                variants={variants}
-                className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full"
-              />
-            </div>
-          </motion.div>
-        ))}
+    <div className="h-full flex flex-col font-mono text-sm max-w-4xl mx-auto py-8">
+      <div className="flex-1 bg-[#1e1e1e] rounded-lg border border-[#333] overflow-hidden shadow-2xl flex flex-col">
+        {/* Editor Header */}
+        <div className="bg-[#2d2d2d] px-4 py-2 border-b border-[#333] flex items-center gap-2">
+          <span className="text-yellow-400 font-bold">&#123;&nbsp;&#125;</span>
+          <span className="text-gray-300">package.json</span>
+        </div>
+
+        {/* Code Content */}
+        <div className="p-4 overflow-auto flex flex-1">
+          {/* Static Line Numbers (Approximate for visual effect) */}
+          <div className="text-[#5c6370] pr-4 select-none text-right flex flex-col min-w-[2.5rem] border-r border-[#333] mr-4 pt-1">
+            {Array.from({ length: 45 }).map((_, i) => (
+              <span key={i} className="leading-6">{i + 1}</span>
+            ))}
+          </div>
+
+          <div className="text-gray-300 w-full pt-1 leading-6">
+            <div>&#123;</div>
+            {Object.entries(skillsData).map(([key, val], index) => {
+              lineIndex.current += 1;
+              const currentIdx = lineIndex.current;
+              return (
+                <div key={key}>
+                  <div
+                    className={`pl-4 py-0.5 transition-colors ${hoveredLine === currentIdx ? 'bg-[#2a2d3e]/50 rounded' : ''}`}
+                    onMouseEnter={() => setHoveredLine(currentIdx)}
+                    onMouseLeave={() => setHoveredLine(null)}
+                  >
+                    <span className="text-[#e06c75]">"{key}"</span>: {renderJsonValue(val, 2, lineIndex)}
+                    {index < Object.keys(skillsData).length - 1 ? "," : ""}
+                  </div>
+                </div>
+              );
+            })}
+            <div>&#125;</div>
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default SkillsPage;
+}
