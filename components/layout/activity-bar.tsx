@@ -1,11 +1,11 @@
 "use client";
 
-import { Files, Search, Settings } from "lucide-react";
+import { Files, Search, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-export type PanelType = "explorer" | "search" | "settings" | null;
+export type PanelType = "explorer" | "search" | "settings" | "visitors" | null;
 
 interface ActivityBarProps {
     activePanel: PanelType;
@@ -27,6 +27,11 @@ export function ActivityBar({ activePanel, onPanelChange }: ActivityBarProps) {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') {
                 e.preventDefault();
                 onPanelChange(activePanel === "search" ? null : "search");
+            }
+            // Ctrl+Shift+V
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'v') {
+                e.preventDefault();
+                onPanelChange(activePanel === "visitors" ? null : "visitors");
             }
         };
 
@@ -56,6 +61,17 @@ export function ActivityBar({ activePanel, onPanelChange }: ActivityBarProps) {
                 title="Search (Ctrl+Shift+F)"
             >
                 <Search className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+
+            <button
+                onClick={() => onPanelChange(activePanel === "visitors" ? null : "visitors")}
+                className={cn(
+                    "p-2 mb-2 rounded transition-colors group relative",
+                    activePanel === "visitors" ? "text-foreground border-l-2 border-primary -ml-[2px]" : "text-muted-foreground hover:text-foreground"
+                )}
+                title="Visitors (Ctrl+Shift+V)"
+            >
+                <Users className="w-6 h-6" strokeWidth={1.5} />
             </button>
 
             {/* spacer */}

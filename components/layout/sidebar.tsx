@@ -11,7 +11,11 @@ import {
     Settings,
     ChevronRight,
     FolderOpen,
-    Code2
+    Code2,
+    Users,
+    Edit2,
+    Check,
+    MousePointer2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFileIconAndColor } from "@/lib/file-icons";
@@ -69,12 +73,15 @@ export function Sidebar({
     onRenameFile,
     onRenameFolder,
     onCancelRenameFile,
-    onCancelRenameFolder
+    onCancelRenameFolder,
+    visitorName = "Visitor",
+    setVisitorName,
+    otherVisitors = []
 }: {
     isMobileOpen: boolean;
     isDesktopOpen: boolean;
     onMobileClose: () => void;
-    activePanel?: "explorer" | "search" | "settings" | null;
+    activePanel?: "explorer" | "search" | "settings" | "visitors" | null;
     activeFile: string | null;
     virtualFiles?: { name: string; path: string; parentId?: string | null }[];
     virtualFolders?: { name: string; path: string; parentId?: string | null }[];
@@ -82,22 +89,35 @@ export function Sidebar({
     onNewFolder?: (name: string) => void;
     onItemContextMenu?: (e: React.MouseEvent, item: { path: string; name: string; isVirtual?: boolean; isFolder?: boolean }) => void;
     onExplorerContextMenu?: (e: React.MouseEvent) => void;
-
-    // Controlled from layout if right click from global context menu happens
     isCreatingFileExt?: string | boolean;
     isCreatingFolderExt?: string | boolean;
     onCancelCreateFile?: () => void;
     onCancelCreateFolder?: () => void;
-
-    // Controlled from layout for renaming
     renamingFileExt?: string | null;
     renamingFolderExt?: string | null;
     onRenameFile: (path: string, newName?: string) => void;
     onRenameFolder: (path: string, newName?: string) => void;
     onCancelRenameFile?: () => void;
     onCancelRenameFolder?: () => void;
+    visitorName?: string;
+    setVisitorName?: (name: string) => void;
+    otherVisitors?: { id: string; name: string; color: string }[];
 }) {
     const pathname = usePathname();
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [tempName, setTempName] = useState(visitorName);
+    const nameInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setTempName(visitorName);
+    }, [visitorName]);
+
+    const handleNameSubmit = () => {
+        if (tempName.trim() && setVisitorName) {
+            setVisitorName(tempName.trim());
+        }
+        setIsEditingName(false);
+    };
     const [width, setWidth] = useState(256);
     const [isResizing, setIsResizing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -688,7 +708,87 @@ export function Sidebar({
                             </div>
                         </div>
                     )}
+                    {activePanel === "visitors" && (
+                        <div className="p-4 flex flex-col h-full overflow-hidden">
+                            <div className="text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-4 shrink-0">VISITORS</div>
+
+                            {/* User Profile */}
+                            <div className="mb-8 p-3 rounded-lg bg-accent/30 border border-border/50">
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Your Profile</div>
+                                <div className="flex items-center justify-between group">
+                                    {isEditingName ? (
+                                        <div className="flex items-center gap-2 w-full">
+                                            <input
+                                                ref={nameInputRef}
+                                                type="text"
+                                                value={tempName}
+                                                onChange={(e) => setTempName(e.target.value)}
+                                                onKeyDown={(e) => e.key === "Enter" && handleNameSubmit()}
+                                                onBlur={handleNameSubmit}
+                                                className="bg-input border-none outline-none text-sm py-0.5 px-1 w-full rounded focus:ring-1 ring-primary"
+                                                autoFocus
+                                            />
+                                            <button onClick={handleNameSubmit} className="text-primary hover:text-primary/80">
+                                                <Check className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between w-full">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] shrink-0" />
+                                                <span className="text-sm font-medium truncate">{visitorName}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => setIsEditingName(true)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded"
+                                            >
+                                                <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Active Visitors */}
+                            <div className="flex-1 overflow-y-auto min-h-0">
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-3 px-1">Active Visitors ({otherVisitors.length})</div>
+                                <div className="space-y-1">
+                                    {otherVisitors.length === 0 ? (
+                                        <div className="text-xs text-muted-foreground italic px-3 py-2 border border-dashed border-border/50 rounded-md">
+                                            No other visitors nearby...
+                                        </div>
+                                    ) : (
+                                        otherVisitors.map((visitor) => (
+                                            <div
+                                                key={visitor.id}
+                                                className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-md transition-colors"
+                                            >
+                                                <div className="relative">
+                                                    <div className="w-2 h-2 rounded-full animate-pulse shadow-sm" style={{ backgroundColor: visitor.color }} />
+                                                    <div className="absolute inset-0 w-2 h-2 rounded-full blur-[2px] opacity-50" style={{ backgroundColor: visitor.color }} />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-sm truncate">{visitor.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                        <MousePointer2 className="w-2 h-2" />
+                                                        Viewing now
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-auto p-3 bg-blue-500/5 rounded-md border border-blue-500/10">
+                                <p className="text-[10px] text-blue-400/70 leading-relaxed italic">
+                                    // You can see other visitors' live cursors on the workspace!
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
 
                 {/* System Status / Git Info */}
                 <div className="p-4 border-t border-border mt-auto">

@@ -15,6 +15,8 @@ import { Code, Terminal as TerminalIcon } from "lucide-react";
 import Image from "next/image";
 import { Terminal, TerminalTheme } from "@/components/layout/terminal";
 import { useSettings, FontType } from "@/components/providers/settings-provider";
+import { getRandomName, getRandomColor } from "@/lib/visitor-names";
+import { VisitorCursor } from "@/components/layout/visitor-cursor";
 
 const ALL_POSSIBLE_TABS = [
   { name: "home.tsx", path: "/" },
@@ -48,6 +50,13 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [renameFolderName, setRenameFolderName] = useState("");
   const [deleteConfirmPath, setDeleteConfirmPath] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
+  // Visitors State
+  const [visitorId] = useState(() => `v-${Math.random().toString(36).substr(2, 9)}`);
+  const [visitorName, setVisitorName] = useState("");
+  const [visitorColor, setVisitorColor] = useState("");
+  const [otherVisitors, setOtherVisitors] = useState<{ id: string; name: string; color: string; x: number; y: number; lastUpdate: number }[]>([]);
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -90,8 +99,43 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
+    // Initialize Visitor
+    const savedName = localStorage.getItem("hengleap-visitor-name");
+    const savedColor = localStorage.getItem("hengleap-visitor-color");
+
+    if (savedName) {
+      setVisitorName(savedName);
+    } else {
+      const name = getRandomName();
+      setVisitorName(name);
+      localStorage.setItem("hengleap-visitor-name", name);
+    }
+
+    if (savedColor) {
+      setVisitorColor(savedColor);
+    } else {
+      const color = getRandomColor();
+      setVisitorColor(color);
+      localStorage.setItem("hengleap-visitor-color", color);
+    }
+
     setIsLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (isLoaded && visitorName) {
+      localStorage.setItem("hengleap-visitor-name", visitorName);
+      // Notify other tabs about name change
+      broadcastChannelRef.current?.postMessage({
+        type: 'update',
+        id: visitorId,
+        name: visitorName,
+        color: visitorColor,
+        x: -100, // invisible initially
+        y: -100
+      });
+    }
+  }, [visitorName, isLoaded, visitorId, visitorColor]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -259,6 +303,64 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [openTabs, untitledCount, pathname, router, virtualFiles]);
+
+  // Real-time Visitor Sync (BroadcastChannel)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const bc = new BroadcastChannel('portfolio-visitors');
+    broadcastChannelRef.current = bc;
+
+    bc.onmessage = (event) => {
+      const { type, id, name, color, x, y } = event.data;
+
+      if (id === visitorId) return; // Ignore own messages
+
+      if (type === 'update' || type === 'move') {
+        setOtherVisitors(prev => {
+          const index = prev.findIndex(v => v.id === id);
+          const now = Date.now();
+          if (index > -1) {
+            const next = [...prev];
+            next[index] = { ...next[index], name, color, x, y, lastUpdate: now };
+            return next;
+          } else {
+            return [...prev, { id, name, color, x, y, lastUpdate: now }];
+          }
+        });
+      }
+    };
+
+    // Periodically clean up inactive visitors
+    const cleanup = setInterval(() => {
+      const now = Date.now();
+      setOtherVisitors(prev => prev.filter(v => now - v.lastUpdate < 3000));
+    }, 2000);
+
+    return () => {
+      bc.close();
+      clearInterval(cleanup);
+    };
+  }, [visitorId]);
+
+  // Track and Broadcast mouse position
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!broadcastChannelRef.current || !visitorName) return;
+
+      broadcastChannelRef.current.postMessage({
+        type: 'move',
+        id: visitorId,
+        name: visitorName,
+        color: visitorColor,
+        x: e.clientX,
+        y: e.clientY
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [visitorId, visitorName, visitorColor]);
 
   const handleMenuToggle = () => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -532,6 +634,9 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
             virtualFolders={virtualFolders}
             onItemContextMenu={(e, item) => setExplorerContextMenu({ x: e.clientX, y: e.clientY, item })}
             onExplorerContextMenu={(e) => setExplorerContextMenu({ x: e.clientX, y: e.clientY, item: null })}
+            visitorName={visitorName}
+            setVisitorName={setVisitorName}
+            otherVisitors={otherVisitors}
           />
         </div>
         <div className="flex flex-col flex-1 h-full overflow-hidden w-full max-w-full min-w-0 bg-[#1e1e1e]/60 relative">
@@ -738,6 +843,20 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       )}
+
+
+      {/* Visitor Cursors Layer */}
+      <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
+        {otherVisitors.map(visitor => (
+          <VisitorCursor
+            key={visitor.id}
+            name={visitor.name}
+            color={visitor.color}
+            x={visitor.x}
+            y={visitor.y}
+          />
+        ))}
+      </div>
     </div>
   );
 };
