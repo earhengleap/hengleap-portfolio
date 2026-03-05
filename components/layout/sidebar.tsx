@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     FileJson,
     TerminalSquare,
@@ -10,9 +10,11 @@ import {
     Briefcase,
     Settings,
     ChevronRight,
-    FolderOpen
+    FolderOpen,
+    Code2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getFileIconAndColor } from "@/lib/file-icons";
 
 const NAV_ITEMS = [
     { name: "home.tsx", path: "/", icon: TerminalSquare, color: "text-blue-400" },
@@ -51,14 +53,51 @@ export function Sidebar({
     isDesktopOpen,
     onMobileClose,
     activePanel,
-    activeFile
+    activeFile,
+    virtualFiles = [],
+    virtualFolders = [],
+    onNewFile,
+    onNewFolder,
+    onItemContextMenu,
+    onExplorerContextMenu,
+    isCreatingFileExt,
+    isCreatingFolderExt,
+    onCancelCreateFile,
+    onCancelCreateFolder,
+    renamingFileExt,
+    renamingFolderExt,
+    onRenameFile,
+    onRenameFolder,
+    onCancelRenameFile,
+    onCancelRenameFolder
 }: {
     isMobileOpen: boolean;
     isDesktopOpen: boolean;
     onMobileClose: () => void;
     activePanel?: "explorer" | "search" | "settings" | null;
     activeFile: string | null;
+    virtualFiles?: { name: string; path: string; parentId?: string | null }[];
+    virtualFolders?: { name: string; path: string; parentId?: string | null }[];
+    onNewFile?: (name: string) => void;
+    onNewFolder?: (name: string) => void;
+    onItemContextMenu?: (e: React.MouseEvent, item: { path: string; name: string; isVirtual?: boolean; isFolder?: boolean }) => void;
+    onExplorerContextMenu?: (e: React.MouseEvent) => void;
+
+    // Controlled from layout if right click from global context menu happens
+    isCreatingFileExt?: string | boolean;
+    isCreatingFolderExt?: string | boolean;
+    onCancelCreateFile?: () => void;
+    onCancelCreateFolder?: () => void;
+
+    // Controlled from layout for renaming
+    renamingFileExt?: string | null;
+    renamingFolderExt?: string | null;
+    onRenameFile: (path: string, newName?: string) => void;
+    onRenameFolder: (path: string, newName?: string) => void;
+    onCancelRenameFile?: () => void;
+    onCancelRenameFolder?: () => void;
 }) {
+    const pathname = usePathname();
     const [width, setWidth] = useState(256);
     const [isResizing, setIsResizing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -66,6 +105,212 @@ export function Sidebar({
 
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+
+    // Track which virtual folders are open
+    const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+
+    // Selection state for F2 rename
+    const [selectedPath, setSelectedPath] = useState<string | null>(null);
+    const [selectedType, setSelectedType] = useState<'file' | 'folder' | null>(null);
+
+    const toggleFolder = (path: string) => {
+        setOpenFolders(prev => {
+            const next = new Set(prev);
+            if (next.has(path)) {
+                next.delete(path);
+            } else {
+                next.add(path);
+            }
+            return next;
+        });
+    };
+
+    // Global shortcut listener
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            // Ignore if user is already typing in an input
+            if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            if (e.key === "F2") {
+                if (selectedPath && (selectedPath.startsWith("/virtual") || selectedPath.startsWith("/virtual-folder"))) {
+                    e.preventDefault();
+                    if (selectedType === 'file') {
+                        onRenameFile(selectedPath);
+                    } else if (selectedType === 'folder') {
+                        onRenameFolder(selectedPath);
+                    }
+                }
+            }
+        };
+        window.addEventListener("keydown", handleGlobalKeyDown);
+        return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    }, [selectedPath, selectedType, onRenameFile, onRenameFolder]);
+
+    // Inline File Creation State
+    const [isCreatingFile, setIsCreatingFile] = useState(false);
+    const [newFileName, setNewFileName] = useState("");
+    const newFileInputRef = useRef<HTMLInputElement>(null);
+
+    // Inline Folder Creation State
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState("");
+    const newFolderInputRef = useRef<HTMLInputElement>(null);
+
+    // Inline File Rename State
+    const [renameFileName, setRenameFileName] = useState("");
+    const renameFileInputRef = useRef<HTMLInputElement>(null);
+
+    // Inline Folder Rename State
+    const [renameFolderName, setRenameFolderName] = useState("");
+    const renameFolderInputRef = useRef<HTMLInputElement>(null);
+
+    // Sync external trigger for files
+    useEffect(() => {
+        if (isCreatingFileExt) {
+            setIsCreatingFile(true);
+            if (typeof isCreatingFileExt === 'string') {
+                setOpenFolders(prev => new Set(prev).add(isCreatingFileExt));
+            }
+        } else {
+            setIsCreatingFile(false);
+        }
+    }, [isCreatingFileExt]);
+
+    // Sync external trigger for folders
+    useEffect(() => {
+        if (isCreatingFolderExt) {
+            setIsCreatingFolder(true);
+            if (typeof isCreatingFolderExt === 'string') {
+                setOpenFolders(prev => new Set(prev).add(isCreatingFolderExt));
+            }
+        } else {
+            setIsCreatingFolder(false);
+        }
+    }, [isCreatingFolderExt]);
+
+    useEffect(() => {
+        if (renamingFileExt) {
+            const file = virtualFiles.find(f => f.path === renamingFileExt);
+            if (file) {
+                setRenameFileName(file.name);
+            }
+        }
+    }, [renamingFileExt, virtualFiles]);
+
+    useEffect(() => {
+        if (renamingFolderExt) {
+            const folder = virtualFolders.find(f => f.path === renamingFolderExt);
+            if (folder) {
+                setRenameFolderName(folder.name);
+            }
+        }
+    }, [renamingFolderExt, virtualFolders]);
+
+    useEffect(() => {
+        if (isCreatingFile && newFileInputRef.current) {
+            newFileInputRef.current.focus();
+        }
+    }, [isCreatingFile]);
+
+    useEffect(() => {
+        if (isCreatingFolder && newFolderInputRef.current) {
+            newFolderInputRef.current.focus();
+        }
+    }, [isCreatingFolder]);
+
+    useEffect(() => {
+        if (renamingFileExt && renameFileInputRef.current) {
+            renameFileInputRef.current.focus();
+            // Optional: select all text excluding extension
+            const dotIndex = renameFileName.lastIndexOf('.');
+            if (dotIndex > 0) {
+                renameFileInputRef.current.setSelectionRange(0, dotIndex);
+            } else {
+                renameFileInputRef.current.select();
+            }
+        }
+    }, [renamingFileExt]); // Delay selection slightly until value is set
+
+    useEffect(() => {
+        if (renamingFolderExt && renameFolderInputRef.current) {
+            renameFolderInputRef.current.focus();
+            renameFolderInputRef.current.select();
+        }
+    }, [renamingFolderExt]);
+
+    const handleCreateFileSubmit = () => {
+        if (newFileName.trim()) {
+            if (onNewFile) onNewFile(newFileName.trim());
+        } else {
+            if (onCancelCreateFile) onCancelCreateFile();
+        }
+        setIsCreatingFile(false);
+        setNewFileName("");
+    };
+
+    const handleCreateFileKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            handleCreateFileSubmit();
+        } else if (e.key === "Escape") {
+            setIsCreatingFile(false);
+            setNewFileName("");
+            if (onCancelCreateFile) onCancelCreateFile();
+        }
+    };
+
+    const handleCreateFolderSubmit = () => {
+        if (newFolderName.trim()) {
+            if (onNewFolder) onNewFolder(newFolderName.trim());
+        } else {
+            if (onCancelCreateFolder) onCancelCreateFolder();
+        }
+        setIsCreatingFolder(false);
+        setNewFolderName("");
+    };
+
+    const handleCreateFolderKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            handleCreateFolderSubmit();
+        } else if (e.key === "Escape") {
+            setIsCreatingFolder(false);
+            setNewFolderName("");
+            if (onCancelCreateFolder) onCancelCreateFolder();
+        }
+    };
+
+    const handleRenameFileSubmit = (path: string) => {
+        if (renameFileName.trim() && onRenameFile) {
+            onRenameFile(path, renameFileName.trim());
+        } else if (onCancelRenameFile) {
+            onCancelRenameFile(); // Fallback if empty
+        }
+    };
+
+    const handleRenameFileKeyDown = (e: React.KeyboardEvent, path: string) => {
+        if (e.key === "Enter") {
+            handleRenameFileSubmit(path);
+        } else if (e.key === "Escape") {
+            if (onCancelRenameFile) onCancelRenameFile();
+        }
+    };
+
+    const handleRenameFolderSubmit = (path: string) => {
+        if (renameFolderName.trim() && onRenameFolder) {
+            onRenameFolder(path, renameFolderName.trim());
+        } else if (onCancelRenameFolder) {
+            onCancelRenameFolder(); // Fallback if empty
+        }
+    };
+
+    const handleRenameFolderKeyDown = (e: React.KeyboardEvent, path: string) => {
+        if (e.key === "Enter") {
+            handleRenameFolderSubmit(path);
+        } else if (e.key === "Escape") {
+            if (onCancelRenameFolder) onCancelRenameFolder();
+        }
+    };
 
     useEffect(() => {
         if (!searchQuery.trim()) {
@@ -148,15 +393,41 @@ export function Sidebar({
                     {(!activePanel || activePanel === "explorer") && (
                         <>
                             {/* Explorer Header */}
-                            <div className="px-4 py-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase flex items-center">
+                            <div className="px-4 py-3 text-xs font-semibold text-muted-foreground tracking-widest uppercase flex items-center justify-between">
                                 EXPLORER
                             </div>
 
                             {/* Workspace Folders */}
-                            <div className="px-2 pb-4">
+                            <div
+                                className="px-2 pb-4 flex-1 overflow-y-auto"
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (onExplorerContextMenu) {
+                                        onExplorerContextMenu(e);
+                                    } else {
+                                        setIsCreatingFile(true);
+                                        setIsFolderOpen(true);
+                                    }
+                                }}
+                            >
                                 <div
-                                    onClick={() => setIsFolderOpen(!isFolderOpen)}
-                                    className="flex items-center text-sm text-foreground font-semibold py-1 cursor-pointer hover:bg-muted rounded px-2 select-none"
+                                    onClick={() => {
+                                        setIsFolderOpen(!isFolderOpen);
+                                        setSelectedPath('/');
+                                        setSelectedType('folder');
+                                    }}
+                                    onContextMenu={(e) => {
+                                        if (onItemContextMenu) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            onItemContextMenu(e, { path: '/', name: 'XING_PORTFOLIO', isVirtual: false, isFolder: true });
+                                        }
+                                    }}
+                                    className={cn(
+                                        "flex items-center text-sm font-semibold py-1 cursor-pointer hover:bg-muted rounded px-2 select-none transition-colors",
+                                        selectedPath === '/' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
+                                    )}
                                 >
                                     <ChevronRight className={cn("w-4 h-4 mr-1 transition-transform", isFolderOpen && "rotate-90")} />
                                     <FolderOpen className="w-4 h-4 mr-2 text-blue-300" />
@@ -172,14 +443,23 @@ export function Sidebar({
                                                 <Link
                                                     key={item.path}
                                                     href={item.path}
+                                                    onContextMenu={(e) => {
+                                                        if (onItemContextMenu) {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            onItemContextMenu(e, { path: item.path, name: item.name, isVirtual: false });
+                                                        }
+                                                    }}
                                                     onClick={() => {
+                                                        setSelectedPath(item.path);
+                                                        setSelectedType('file');
                                                         if (window.innerWidth < 768) {
                                                             onMobileClose();
                                                         }
                                                     }}
                                                     className={cn(
                                                         "flex items-center text-sm py-[4px] px-2 rounded cursor-pointer transition-colors",
-                                                        isActive
+                                                        pathname === item.path || selectedPath === item.path
                                                             ? "bg-accent text-accent-foreground"
                                                             : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                                     )}
@@ -189,8 +469,165 @@ export function Sidebar({
                                                 </Link>
                                             )
                                         })}
+
                                     </div>
                                 )}
+
+                                {/* Recursive Virtual Item Rendering */}
+                                {(() => {
+                                    const renderTree = (parentId: string | null = null, level: number = 0) => {
+                                        const folders = virtualFolders.filter(f => (f.parentId || null) === (parentId || null));
+                                        const files = virtualFiles.filter(f => (f.parentId || null) === (parentId || null));
+                                        const isCreatingFolderAtThisLevel = isCreatingFolderExt === (parentId || true);
+                                        const isCreatingFileAtThisLevel = isCreatingFileExt === (parentId || true);
+
+                                        return (
+                                            <div className={cn("flex flex-col gap-[2px]", level > 0 && "pl-4")}>
+                                                {folders.map((item) => {
+                                                    const isActive = activeFile === item.path;
+                                                    const isRenaming = renamingFolderExt === item.path;
+                                                    const isOpen = openFolders.has(item.path);
+
+                                                    if (isRenaming) {
+                                                        return (
+                                                            <div key={item.path} className="flex items-center text-sm py-[2px] px-2 rounded bg-accent/50 border border-blue-500/50">
+                                                                <FolderOpen className="w-4 h-4 mr-2 shrink-0 text-gray-300" />
+                                                                <input
+                                                                    ref={renameFolderInputRef}
+                                                                    type="text"
+                                                                    value={renameFolderName}
+                                                                    onChange={(e) => setRenameFolderName(e.target.value)}
+                                                                    onKeyDown={(e) => handleRenameFolderKeyDown(e, item.path)}
+                                                                    onBlur={() => handleRenameFolderSubmit(item.path)}
+                                                                    className="w-full bg-transparent border-none outline-none text-foreground text-sm"
+                                                                />
+                                                            </div>
+                                                        )
+                                                    }
+
+                                                    return (
+                                                        <div key={item.path}>
+                                                            <div
+                                                                onClick={() => {
+                                                                    toggleFolder(item.path);
+                                                                    setSelectedPath(item.path);
+                                                                    setSelectedType('folder');
+                                                                }}
+                                                                onContextMenu={(e) => {
+                                                                    if (onItemContextMenu) {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        onItemContextMenu(e, { path: item.path, name: item.name, isVirtual: true, isFolder: true });
+                                                                    }
+                                                                }}
+                                                                className={cn(
+                                                                    "flex items-center text-sm py-[4px] px-2 rounded cursor-pointer transition-colors",
+                                                                    item.path === activeFile || selectedPath === item.path
+                                                                        ? "bg-accent text-accent-foreground"
+                                                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                                )}
+                                                            >
+                                                                <ChevronRight className={cn("w-4 h-4 mr-1 transition-transform", isOpen && "rotate-90")} />
+                                                                <FolderOpen className="w-4 h-4 mr-2 shrink-0 text-gray-300" />
+                                                                <span className="truncate italic">{item.name}</span>
+                                                            </div>
+                                                            {/* Render Children */}
+                                                            {isOpen && renderTree(item.path, level + 1)}
+                                                        </div>
+                                                    )
+                                                })}
+
+                                                {/* Inline Folder Creation */}
+                                                {(isCreatingFolderAtThisLevel || (isCreatingFolder && !parentId && isCreatingFolderExt === true)) && (
+                                                    <div className="flex items-center text-sm py-[2px] px-2 rounded bg-accent/50 border border-blue-500/50">
+                                                        <FolderOpen className="w-4 h-4 mr-2 shrink-0 text-gray-300" />
+                                                        <input
+                                                            ref={newFolderInputRef}
+                                                            type="text"
+                                                            value={newFolderName}
+                                                            onChange={(e) => setNewFolderName(e.target.value)}
+                                                            onKeyDown={handleCreateFolderKeyDown}
+                                                            onBlur={handleCreateFolderSubmit}
+                                                            placeholder="new-folder..."
+                                                            className="w-full bg-transparent border-none outline-none text-foreground text-sm"
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {files.map((item) => {
+                                                    const isActive = activeFile === item.path;
+                                                    const { icon: IconComponent, color } = getFileIconAndColor(item.name);
+                                                    const isRenaming = renamingFileExt === item.path;
+
+                                                    if (isRenaming) {
+                                                        return (
+                                                            <div key={item.path} className="flex items-center text-sm py-[2px] px-2 rounded bg-accent/50 border border-blue-500/50">
+                                                                <IconComponent className={cn("w-4 h-4 mr-2 shrink-0", color)} />
+                                                                <input
+                                                                    ref={renameFileInputRef}
+                                                                    type="text"
+                                                                    value={renameFileName}
+                                                                    onChange={(e) => setRenameFileName(e.target.value)}
+                                                                    onKeyDown={(e) => handleRenameFileKeyDown(e, item.path)}
+                                                                    onBlur={() => handleRenameFileSubmit(item.path)}
+                                                                    className="w-full bg-transparent border-none outline-none text-foreground text-sm"
+                                                                />
+                                                            </div>
+                                                        )
+                                                    }
+
+                                                    return (
+                                                        <Link
+                                                            key={item.path}
+                                                            href={item.path}
+                                                            onContextMenu={(e) => {
+                                                                if (onItemContextMenu) {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    onItemContextMenu(e, { path: item.path, name: item.name, isVirtual: true });
+                                                                }
+                                                            }}
+                                                            onClick={() => {
+                                                                setSelectedPath(item.path);
+                                                                setSelectedType('file');
+                                                                if (window.innerWidth < 768) {
+                                                                    onMobileClose();
+                                                                }
+                                                            }}
+                                                            className={cn(
+                                                                "flex items-center text-sm py-[4px] px-2 rounded cursor-pointer transition-colors",
+                                                                isActive || selectedPath === item.path
+                                                                    ? "bg-accent text-accent-foreground"
+                                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                            )}
+                                                        >
+                                                            <IconComponent className={cn("w-4 h-4 mr-2 shrink-0", color)} />
+                                                            <span className="truncate italic">{item.name}</span>
+                                                        </Link>
+                                                    )
+                                                })}
+
+                                                {/* Inline File Creation */}
+                                                {(isCreatingFileAtThisLevel || (isCreatingFile && !parentId && isCreatingFileExt === true)) && (
+                                                    <div className="flex items-center text-sm py-[2px] px-2 rounded bg-accent/50 border border-blue-500/50">
+                                                        <FileJson className="w-4 h-4 mr-2 shrink-0 text-blue-400" />
+                                                        <input
+                                                            ref={newFileInputRef}
+                                                            type="text"
+                                                            value={newFileName}
+                                                            onChange={(e) => setNewFileName(e.target.value)}
+                                                            onKeyDown={handleCreateFileKeyDown}
+                                                            onBlur={handleCreateFileSubmit}
+                                                            className="w-full bg-transparent border-none outline-none text-foreground text-sm"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    };
+
+                                    return renderTree();
+                                })()}
                             </div>
                         </>
                     )}

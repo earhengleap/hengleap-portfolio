@@ -10,9 +10,11 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlobalContextMenu } from "@/components/layout/global-context-menu";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { ExplorerContextMenu } from "@/components/layout/explorer-context-menu";
 import { Code, Terminal as TerminalIcon } from "lucide-react";
 import Image from "next/image";
-import { Terminal } from "@/components/layout/terminal";
+import { Terminal, TerminalTheme } from "@/components/layout/terminal";
+import { useSettings, FontType } from "@/components/providers/settings-provider";
 
 const ALL_POSSIBLE_TABS = [
   { name: "home.tsx", path: "/" },
@@ -25,19 +27,107 @@ const ALL_POSSIBLE_TABS = [
 
 const DEFAULT_TABS: { name: string, path: string }[] = [];
 
-const RootLayout = ({ children }: { children: React.ReactNode }) => {
+const MainLayout = ({ children }: { children: React.ReactNode }) => {
+  const { setTheme, setFont } = useSettings();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<PanelType>("explorer");
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [commandPaletteInitialQuery, setCommandPaletteInitialQuery] = useState("");
   const [globalContextMenu, setGlobalContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const [explorerContextMenu, setExplorerContextMenu] = useState<{ x: number, y: number, item: { path: string; name: string; isVirtual?: boolean } | null } | null>(null);
   const [untitledCount, setUntitledCount] = useState(1);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
+  const [terminalTheme, setTerminalTheme] = useState<TerminalTheme>("vscode");
+  const [terminalFont, setTerminalFont] = useState<FontType>("jetbrains");
+  const [isCreatingFileExt, setIsCreatingFileExt] = useState<string | boolean>(false); // string is parentPath
+  const [isCreatingFolderExt, setIsCreatingFolderExt] = useState<string | boolean>(false); // string is parentPath
+  const [renamingFileExt, setRenamingFileExt] = useState<string | null>(null);
+  const [renamingFolderExt, setRenamingFolderExt] = useState<string | null>(null);
+  const [renameFileName, setRenameFileName] = useState("");
+  const [renameFolderName, setRenameFolderName] = useState("");
+  const [deleteConfirmPath, setDeleteConfirmPath] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
   const [openTabs, setOpenTabs] = useState<{ name: string, path: string }[]>([]);
   const userClosedTabRef = useRef<string | null>(null);
   const isInitialLoad = useRef(true);
+
+  // Virtual Files & Folders State
+  const [virtualFiles, setVirtualFiles] = useState<{ name: string; path: string; content: string; parentId?: string | null }[]>([]);
+  const [virtualFolders, setVirtualFolders] = useState<{ name: string; path: string; parentId?: string | null }[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const savedFiles = localStorage.getItem("hengleap-virtual-files");
+    const savedFolders = localStorage.getItem("hengleap-virtual-folders");
+    const savedTerminalTheme = localStorage.getItem("hengleap-terminal-theme") as TerminalTheme;
+    const savedTerminalFont = localStorage.getItem("hengleap-terminal-font") as FontType;
+
+    if (savedTerminalTheme) {
+      setTerminalTheme(savedTerminalTheme);
+    }
+
+    if (savedTerminalFont) {
+      setTerminalFont(savedTerminalFont);
+    }
+
+    if (savedFiles) {
+      try {
+        setVirtualFiles(JSON.parse(savedFiles));
+      } catch (e) {
+        console.error("Failed to parse virtual files from storage");
+      }
+    }
+
+    if (savedFolders) {
+      try {
+        setVirtualFolders(JSON.parse(savedFolders));
+      } catch (e) {
+        console.error("Failed to parse virtual folders from storage");
+      }
+    }
+
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("hengleap-terminal-theme", terminalTheme);
+    }
+  }, [terminalTheme, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("hengleap-terminal-font", terminalFont);
+    }
+  }, [terminalFont, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("hengleap-virtual-files", JSON.stringify(virtualFiles));
+    }
+  }, [virtualFiles, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("hengleap-virtual-folders", JSON.stringify(virtualFolders));
+    }
+  }, [virtualFolders, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("hengleap-terminal-theme", terminalTheme);
+    }
+  }, [terminalTheme, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("hengleap-terminal-font", terminalFont);
+    }
+  }, [terminalFont, isLoaded]);
 
   useEffect(() => {
     if (isInitialLoad.current) {
@@ -55,23 +145,62 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
 
     userClosedTabRef.current = null;
 
-    let matchedTab = ALL_POSSIBLE_TABS.find(t => t.path === pathname);
+    let matchedTab = ALL_POSSIBLE_TABS.find(t => t.path === pathname || (pathname === "/settings.json" && t.path === "/settings.json"));
 
     // If it's a dynamic file path (e.g. /files/components/button.tsx), generate a generic tab
-    if (!matchedTab && pathname.startsWith("/files/")) {
-      const parts = pathname.split("/");
-      matchedTab = { name: parts[parts.length - 1], path: pathname };
+    if (!matchedTab && (pathname.startsWith("/files/") || pathname.startsWith("/virtual/") || pathname.startsWith("/Untitled-"))) {
+      const existingVirtual = virtualFiles.find(f => f.path === pathname);
+      if (existingVirtual) {
+        matchedTab = { name: existingVirtual.name, path: pathname };
+      } else {
+        const parts = pathname.split("/");
+        matchedTab = { name: parts[parts.length - 1], path: pathname };
+      }
     }
 
-    if (matchedTab) {
+    // Special fix: If we are on home ("/"), we shouldn't force open the settings tab or unneeded tabs
+    if (matchedTab && matchedTab.path !== "/") {
       setOpenTabs(prev => {
+        // If we are on home and openTabs is empty, we don't necessarily want to force the home tab to open alongside others
         if (!prev.find(t => t.path === matchedTab!.path)) {
           return [...prev, matchedTab!];
         }
         return prev;
       });
+    } else if (matchedTab && matchedTab.path === "/") {
+      setOpenTabs(prev => {
+        if (!prev.find(t => t.path === "/") && prev.length === 0) {
+          return []; // Dont force open home tab if we just want a clear workspace
+        }
+        if (!prev.find(t => t.path === "/") && prev.length > 0) {
+          return [...prev, matchedTab!];
+        }
+        return prev;
+      })
     }
   }, [pathname]);
+
+  const toggleSettings = () => {
+    if (pathname === "/settings.json") {
+      // Toggle off: close settings and go back to last tab
+      const newTabs = openTabs.filter(t => t.path !== "/settings.json");
+      setOpenTabs(newTabs);
+      userClosedTabRef.current = "/settings.json";
+
+      if (newTabs.length > 0) {
+        router.push(newTabs[newTabs.length - 1].path);
+      } else {
+        router.push("/");
+      }
+    } else {
+      // Toggle on: open settings
+      router.push("/settings.json");
+    }
+
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setIsMobileMenuOpen(false); // Close sidebar if open on mobile
+    }
+  };
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -79,11 +208,18 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       // Ctrl + , for Settings
       if (e.ctrlKey && e.key === ',') {
         e.preventDefault();
-        router.push("/settings.json");
+        toggleSettings();
       }
       // Ctrl + P for Quick Open
-      if (e.ctrlKey && e.key === 'p') {
+      if (e.ctrlKey && !e.shiftKey && e.key === 'p') {
         e.preventDefault();
+        setCommandPaletteInitialQuery("");
+        setIsCommandPaletteOpen(true);
+      }
+      // Ctrl + Shift + P for Command Palette
+      if (e.ctrlKey && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+        e.preventDefault();
+        setCommandPaletteInitialQuery(">");
         setIsCommandPaletteOpen(true);
       }
       // Ctrl + N for New File
@@ -101,6 +237,18 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         e.preventDefault();
         setActivePanel("search");
       }
+      // Ctrl + S for Saving/Renaming Virtual Files
+      if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        if (pathname.startsWith("/virtual/") || pathname.startsWith("/Untitled-")) {
+          const activeFile = virtualFiles.find(f => f.path === pathname);
+          if (activeFile) {
+            setRenamingFileExt(pathname);
+            // Open the explorer tab if it isn't already so they can see the input
+            setActivePanel("explorer");
+          }
+        }
+      }
       // Ctrl + ` for Terminal
       if (e.ctrlKey && e.key === '`') {
         e.preventDefault();
@@ -110,7 +258,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [openTabs, untitledCount]);
+  }, [openTabs, untitledCount, pathname, router, virtualFiles]);
 
   const handleMenuToggle = () => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -161,13 +309,150 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const handleNewFile = () => {
-    const fileName = `Untitled-${untitledCount}`;
-    const filePath = `/Untitled-${untitledCount}`;
+  const getUniqueName = (name: string, type: 'file' | 'folder', ignorePath?: string, parentId?: string | null) => {
+    // Replace all spaces with hyphens
+    const sanitizedName = name.trim().replace(/\s+/g, '-');
+    let finalName = sanitizedName;
+    let counter = 1;
 
-    setOpenTabs(prev => [...prev, { name: fileName, path: filePath }]);
+    // Split into base and extension (only matters for files)
+    const dotIndex = type === 'file' ? sanitizedName.lastIndexOf('.') : -1;
+    const base = dotIndex !== -1 ? sanitizedName.substring(0, dotIndex) : sanitizedName;
+    const ext = dotIndex !== -1 ? sanitizedName.substring(dotIndex) : '';
+
+    const isDuplicate = (checkName: string) => {
+      if (type === 'file') {
+        const parentFiles = virtualFiles.filter(f => (f.parentId || null) === (parentId || null));
+        return parentFiles.some(f => f.name === checkName && f.path !== ignorePath) ||
+          (parentId === null && ALL_POSSIBLE_TABS.some(t => t.name === checkName));
+      } else {
+        const parentFolders = virtualFolders.filter(f => (f.parentId || null) === (parentId || null));
+        return parentFolders.some(f => f.name === checkName && f.path !== ignorePath);
+      }
+    };
+
+    while (isDuplicate(finalName)) {
+      finalName = `${base}-${counter}${ext}`;
+      counter++;
+    }
+    return finalName;
+  };
+
+  const handleNewFile = (nameOrParent?: string) => {
+    // If it's a string, it could be the name (from palette) or parentId (from right-click)
+    // Actually, palette calls with name. Sidebar calls with parentId when isCreatingFileExt is true.
+
+    if (nameOrParent === undefined || (typeof nameOrParent === 'string' && nameOrParent.startsWith('/'))) {
+      // Trigger inline creation in the sidebar
+      setIsCreatingFileExt(nameOrParent || true);
+      return;
+    }
+
+    const parentId = typeof isCreatingFileExt === 'string' ? (isCreatingFileExt as string) : null;
+    const newName = getUniqueName(nameOrParent, 'file', undefined, parentId);
+    const filePath = `/virtual/${Date.now()}`;
+    const newFile = { name: newName, path: filePath, content: "// Start typing your code here...\n", parentId };
+
+    setVirtualFiles(prev => [...prev, newFile]);
+    setOpenTabs(prev => [...prev, { name: newName, path: filePath }]);
     setUntitledCount(prev => prev + 1);
     router.push(filePath);
+    setIsCreatingFileExt(false);
+  };
+
+  const handleNewFolder = (nameOrParent?: string) => {
+    if (nameOrParent === undefined || (typeof nameOrParent === 'string' && nameOrParent.startsWith('/'))) {
+      setIsCreatingFolderExt(nameOrParent || true);
+      return;
+    }
+
+    const parentId = typeof isCreatingFolderExt === 'string' ? (isCreatingFolderExt as string) : null;
+    const newName = getUniqueName(nameOrParent, 'folder', undefined, parentId);
+    const folderPath = `/virtual-folder/${Date.now()}`;
+    const newFolder = { name: newName, path: folderPath, parentId };
+
+    setVirtualFolders(prev => [...prev, newFolder]);
+    setIsCreatingFolderExt(false);
+  };
+
+  const handleRenameVirtualFile = (filePath: string, currentNameOrNewName?: string) => {
+    // If we're triggering from context menu without a new name, enter rename mode
+    if (currentNameOrNewName === undefined) {
+      setRenamingFileExt(filePath);
+      return;
+    }
+
+    // Actually perform the rename
+    const newName = getUniqueName(currentNameOrNewName, 'file', filePath, virtualFiles.find(f => f.path === filePath)?.parentId);
+    setVirtualFiles(prev => prev.map(f => f.path === filePath ? { ...f, name: newName } : f));
+    setOpenTabs(prev => prev.map(t => t.path === filePath ? { ...t, name: newName } : t));
+    setRenamingFileExt(null);
+  };
+
+  const handleRenameVirtualFolder = (folderPath: string, currentNameOrNewName?: string) => {
+    if (currentNameOrNewName === undefined) {
+      setRenamingFolderExt(folderPath);
+      return;
+    }
+
+    const newName = getUniqueName(currentNameOrNewName, 'folder', folderPath, virtualFolders.find(f => f.path === folderPath)?.parentId);
+    setVirtualFolders(prev => prev.map(f => f.path === folderPath ? { ...f, name: newName } : f));
+    setRenamingFolderExt(null);
+  };
+
+  const handleDeleteVirtualItem = (path: string, isFolder?: boolean) => {
+    setDeleteConfirmPath(path + (isFolder ? "?folder=true" : ""));
+  };
+
+  const confirmDeleteVirtualItem = () => {
+    if (!deleteConfirmPath) return;
+
+    const isFolder = deleteConfirmPath.endsWith("?folder=true");
+    const path = deleteConfirmPath.replace("?folder=true", "");
+
+    if (isFolder) {
+      // Recursive delete
+      const getAllChildFolders = (pId: string): string[] => {
+        const children = virtualFolders.filter(f => f.parentId === pId).map(f => f.path);
+        return [...children, ...children.flatMap(c => getAllChildFolders(c))];
+      };
+
+      const folderPathsToDelete = [path, ...getAllChildFolders(path)];
+
+      // Find ALL files that are inside any of the folders being deleted
+      const filePathsToDelete = virtualFiles
+        .filter(f => f.parentId && folderPathsToDelete.includes(f.parentId))
+        .map(f => f.path);
+
+      setVirtualFolders(prev => prev.filter(f => !folderPathsToDelete.includes(f.path)));
+      setVirtualFiles(prev => prev.filter(f => !f.parentId || !folderPathsToDelete.includes(f.parentId)));
+
+      // Close tabs for all deleted files
+      const remainingTabsAfterFolderDelete = openTabs.filter(t => !filePathsToDelete.includes(t.path));
+      setOpenTabs(remainingTabsAfterFolderDelete);
+
+      // If the current file is being deleted (it's in a deleted folder), redirect
+      if (filePathsToDelete.includes(pathname)) {
+        if (remainingTabsAfterFolderDelete.length > 0) {
+          router.push(remainingTabsAfterFolderDelete[remainingTabsAfterFolderDelete.length - 1].path);
+        } else {
+          router.push("/");
+        }
+      }
+    } else {
+      setVirtualFiles(prev => prev.filter(f => f.path !== path));
+      const newTabs = openTabs.filter(t => t.path !== path);
+      setOpenTabs(newTabs);
+
+      if (pathname === path) {
+        if (newTabs.length > 0) {
+          router.push(newTabs[newTabs.length - 1].path);
+        } else {
+          router.push("/");
+        }
+      }
+    }
+    setDeleteConfirmPath(null);
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -212,25 +497,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             activePanel={activePanel}
             onPanelChange={(panel) => {
               if (panel === "settings") {
-                if (pathname === "/settings.json") {
-                  // Toggle off: close settings and go back to last tab
-                  const newTabs = openTabs.filter(t => t.path !== "/settings.json");
-                  setOpenTabs(newTabs);
-                  userClosedTabRef.current = "/settings.json";
-
-                  if (newTabs.length > 0) {
-                    router.push(newTabs[newTabs.length - 1].path);
-                  } else {
-                    router.push("/");
-                  }
-                } else {
-                  // Toggle on: open settings
-                  router.push("/settings.json");
-                }
-
-                if (typeof window !== "undefined" && window.innerWidth < 768) {
-                  setIsMobileMenuOpen(false); // Close sidebar if open on mobile
-                }
+                toggleSettings();
               } else {
                 setActivePanel(panel);
                 if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -249,11 +516,27 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             onMobileClose={() => setIsMobileMenuOpen(false)}
             activePanel={activePanel}
             activeFile={openTabs.length === 0 ? null : pathname}
+            virtualFiles={virtualFiles}
+            onNewFile={handleNewFile}
+            onNewFolder={handleNewFolder}
+            isCreatingFileExt={isCreatingFileExt}
+            isCreatingFolderExt={isCreatingFolderExt}
+            onCancelCreateFile={() => setIsCreatingFileExt(false)}
+            onCancelCreateFolder={() => setIsCreatingFolderExt(false)}
+            renamingFileExt={renamingFileExt}
+            renamingFolderExt={renamingFolderExt}
+            onRenameFile={handleRenameVirtualFile}
+            onRenameFolder={handleRenameVirtualFolder}
+            onCancelRenameFile={() => setRenamingFileExt(null)}
+            onCancelRenameFolder={() => setRenamingFolderExt(null)}
+            virtualFolders={virtualFolders}
+            onItemContextMenu={(e, item) => setExplorerContextMenu({ x: e.clientX, y: e.clientY, item })}
+            onExplorerContextMenu={(e) => setExplorerContextMenu({ x: e.clientX, y: e.clientY, item: null })}
           />
         </div>
-        <div className="flex flex-col flex-1 h-full overflow-hidden w-full max-w-full min-w-0 bg-[#1e1e1e]/60">
+        <div className="flex flex-col flex-1 h-full overflow-hidden w-full max-w-full min-w-0 bg-[#1e1e1e]/60 relative">
           {openTabs.length > 0 && (
-            <div className="no-global-context">
+            <div className="no-global-context relative z-10">
               <Topbar
                 onMenuClick={handleMenuToggle}
                 openTabs={openTabs}
@@ -263,56 +546,103 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
               />
             </div>
           )}
-          <main className="flex-1 overflow-y-auto">
-            {openTabs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500 bg-[#1e1e1e]">
-                {/* Empty Workspace State */}
-                <h1 className="text-4xl md:text-5xl font-light text-[#3c3c3c] mb-12 select-none">Hengleap EAR</h1>
+          <AnimatePresence initial={false}>
+            {!(isTerminalOpen && isTerminalMaximized) && (
+              <motion.main
+                initial={{ height: "100%", opacity: 1 }}
+                animate={{
+                  height: "100%",
+                  opacity: 1,
+                  display: "block"
+                }}
+                exit={{
+                  height: 0,
+                  opacity: 0,
+                  transition: { duration: 0.3, ease: "easeInOut" }
+                }}
+                className="flex-1 overflow-y-auto relative z-0"
+              >
+                {openTabs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500 bg-[#1e1e1e]">
+                    {/* Empty Workspace State */}
+                    <h1 className="text-4xl md:text-5xl font-light text-[#3c3c3c] mb-12 select-none">Hengleap EAR</h1>
 
-                <div className="grid grid-cols-[1fr_auto] gap-x-8 gap-y-3 text-sm">
-                  <div className="text-right text-gray-400 my-auto">Show Explorer</div>
-                  <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+E</div>
+                    <div className="grid grid-cols-[1fr_auto] gap-x-8 gap-y-3 text-sm">
+                      <div className="text-right text-gray-400 my-auto">Show Explorer</div>
+                      <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+E</div>
 
-                  <div className="text-right text-gray-400 my-auto">Global Search</div>
-                  <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+F</div>
+                      <div className="text-right text-gray-400 my-auto">Global Search</div>
+                      <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+F</div>
 
-                  <div className="text-right text-gray-400 my-auto">Open Settings</div>
-                  <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+,</div>
-                </div>
-
-                <div className="mt-16 text-xs text-blue-500/50 italic opacity-50 hover:opacity-100 transition-opacity user-select-none">
-                      // Open a file from the explorer to begin
-                </div>
-              </div>
-            ) : (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={pathname}
-                  initial={{ opacity: 0, x: pathname === "/settings.json" ? -20 : 0 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: pathname === "/settings.json" ? -20 : 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="p-4 md:p-8 h-full"
-                >
-                  {pathname.startsWith("/Untitled-") ? (
-                    <div className="w-full h-full flex flex-col font-mono text-sm animate-in fade-in duration-300">
-                      <div className="flex items-center text-gray-400 mb-4 pb-2 border-b border-[#333]/50">
-                        <Code className="w-4 h-4 mr-2 text-blue-400" />
-                        <span className="text-gray-500 mr-2">{"{ }"}</span>
-                        {pathname.replace("/", "")} (Virtual File)
-                      </div>
-                      <textarea
-                        className="flex-1 bg-transparent border-none outline-none resize-none text-gray-300 leading-relaxed custom-scrollbar focus:ring-0"
-                        placeholder="// Start typing your code here..."
-                      />
+                      <div className="text-right text-gray-400 my-auto">Open Settings</div>
+                      <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+,</div>
                     </div>
-                  ) : (
-                    children
-                  )}
-                </motion.div>
-              </AnimatePresence>
+
+                    <div className="mt-16 text-xs text-blue-500/50 italic opacity-50 hover:opacity-100 transition-opacity user-select-none">
+                          // Open a file from the explorer to begin
+                    </div>
+                  </div>
+                ) : (
+                  <AnimatePresence>
+                    <motion.div
+                      key={pathname}
+                      initial={{ opacity: 0, scale: pathname === "/settings.json" ? 0.95 : 1, y: pathname === "/settings.json" ? 0 : 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: pathname === "/settings.json" ? 0.95 : 1, y: pathname === "/settings.json" ? 0 : -10, transition: { duration: 0.15, ease: "easeIn" } }}
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      className="p-4 md:p-8 h-full"
+                    >
+                      {pathname.startsWith("/Untitled-") || pathname.startsWith("/virtual/") ? (
+                        (() => {
+                          const activeVirtualFile = virtualFiles.find(f => f.path === pathname);
+                          const displayName = activeVirtualFile ? activeVirtualFile.name : pathname.replace("/", "");
+                          return (
+                            <div className="w-full h-full flex flex-col font-mono text-sm animate-in fade-in duration-300">
+                              <div className="flex items-center text-gray-400 mb-4 pb-2 border-b border-[#333]/50 justify-between">
+                                <div className="flex items-center">
+                                  <Code className="w-4 h-4 mr-2 text-blue-400" />
+                                  <span className="text-gray-500 mr-2">{"{ }"}</span>
+                                  {displayName} <span className="text-gray-600 ml-2 text-xs">(Virtual File)</span>
+                                </div>
+                                <div className="text-xs text-blue-400/50 flex gap-4">
+                                  <span>Ctrl+S to save/rename</span>
+                                </div>
+                              </div>
+                              <textarea
+                                className="flex-1 bg-transparent border-none outline-none resize-none text-gray-300 leading-relaxed custom-scrollbar focus:ring-0"
+                                value={activeVirtualFile?.content || ""}
+                                onChange={(e) => {
+                                  const newContent = e.target.value;
+                                  setVirtualFiles(prev => prev.map(f => f.path === pathname ? { ...f, content: newContent } : f));
+                                }}
+                                placeholder="// Start typing your code here..."
+                                spellCheck={false}
+                              />
+                            </div>
+                          )
+                        })()
+                      ) : (
+                        children
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                )}
+              </motion.main>
             )}
-          </main>
+          </AnimatePresence>
+
+          {/* Terminal View */}
+          <div className="no-global-context">
+            <Terminal
+              isOpen={isTerminalOpen}
+              onClose={() => setIsTerminalOpen(false)}
+              isMaximized={isTerminalMaximized}
+              onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
+              theme={terminalTheme}
+              onThemeChange={setTerminalTheme}
+              font={terminalFont}
+            />
+          </div>
         </div>
       </div>
 
@@ -320,8 +650,15 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
-        files={ALL_POSSIBLE_TABS}
+        files={[...ALL_POSSIBLE_TABS, ...virtualFiles]}
         onSelect={(path: string) => router.push(path)}
+        initialQuery={commandPaletteInitialQuery}
+        setTheme={setTheme}
+        setFont={setFont}
+        terminalTheme={terminalTheme}
+        setTerminalTheme={setTerminalTheme}
+        terminalFont={terminalFont}
+        setTerminalFont={setTerminalFont}
       />
 
       {globalContextMenu && (
@@ -335,18 +672,74 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
-      {/* Terminal View */}
-      <div className={cn(
-        "no-global-context",
-        !isTerminalOpen && "hidden"
-      )}>
-        <Terminal
-          isOpen={isTerminalOpen}
-          onClose={() => setIsTerminalOpen(false)}
+      {explorerContextMenu && (
+        <ExplorerContextMenu
+          x={explorerContextMenu.x}
+          y={explorerContextMenu.y}
+          itemRef={explorerContextMenu.item as any}
+          onClose={() => setExplorerContextMenu(null)}
+          onNewFile={handleNewFile}
+          onNewFolder={handleNewFolder}
+          onRename={(path, currentName) => {
+            const isFolder = virtualFolders.some(f => f.path === path);
+            if (isFolder) {
+              setRenamingFolderExt(path);
+              setRenameFolderName(currentName);
+            } else {
+              setRenamingFileExt(path);
+              setRenameFileName(currentName);
+            }
+          }}
+          onDelete={handleDeleteVirtualItem}
         />
-      </div>
+      )}
+
+      {/* Modals */}
+      {deleteConfirmPath && (
+        <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
+            <h3 className="text-lg font-semibold text-gray-200 mb-2">
+              Delete {deleteConfirmPath.includes("?folder=true") ? "Folder" : "File"}
+            </h3>
+            <p className="text-sm text-gray-400 mb-6">
+              Are you sure you want to delete this {deleteConfirmPath.includes("?folder=true") ? "folder and all its contents" : "file"}? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirmPath(null)}
+                className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteVirtualItem}
+                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {alertMessage && (
+        <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
+            <h3 className="text-lg font-semibold text-gray-200 mb-2">Notice</h3>
+            <p className="text-sm text-gray-400 mb-6">{alertMessage}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setAlertMessage(null)}
+                className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default RootLayout;
+export default MainLayout;

@@ -8,6 +8,9 @@ const nextConfig = {
   images: {
     domains: ["images.unsplash.com"],
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
 };
 
 export default nextConfig;

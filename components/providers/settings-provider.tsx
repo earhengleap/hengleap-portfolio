@@ -17,14 +17,14 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const THEMES: Record<ThemeType, string> = {
+export const THEMES: Record<ThemeType, string> = {
     default: "theme-default",
     dracula: "theme-dracula",
     matrix: "theme-matrix",
     "github-dark": "theme-github-dark"
 };
 
-const FONTS: Record<FontType, string> = {
+export const FONTS: Record<FontType, string> = {
     jetbrains: "font-jetbrains",
     fira: "font-fira",
     "source-code": "font-source-code",
@@ -89,14 +89,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     }, [theme, font, fontSize, mounted]);
 
-    // Don't render until mounted to prevent hydration mismatch
-    if (!mounted) {
-        return <div style={{ visibility: "hidden" }}>{children}</div>;
-    }
-
     return (
         <SettingsContext.Provider value={{ theme, setTheme, font, setFont, fontSize, setFontSize }}>
-            {children}
+            {!mounted ? (
+                <div style={{ visibility: "hidden" }}>{children}</div>
+            ) : (
+                children
+            )}
         </SettingsContext.Provider>
     );
 }

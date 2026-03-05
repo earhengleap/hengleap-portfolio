@@ -74,7 +74,7 @@ export default function HomePage() {
               <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
                 <div className="flex-1 space-y-4">
                   <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
-                    <span className="text-primary">const</span> developer = <span className="text-blue-400">"HengLeap"</span>;
+                    <span className="text-primary">const</span> developer = <span className="text-blue-400">"HengLeap EAR"</span>;
                   </h1>
                   <p className="text-gray-400 text-lg">
                     Software Engineer • Problem Solver • Tech Enthusiast
