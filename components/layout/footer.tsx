@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Linkedin, Github, Heart } from "lucide-react";
-import Loader from "@/components/loading"; // Assuming this is the correct path to your Loader component
+import Loader from "@/components/shared/loading"; // Assuming this is the correct path to your Loader component
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();

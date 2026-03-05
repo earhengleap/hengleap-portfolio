@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Terminal, Code2, Cpu, UserCircle, FolderGit2 } from "lucide-react";
 
 const BOOT_SEQUENCE = [
-  "Initializing Codex Coder v2.0.4...",
+  "Initializing Codex Coder v1.0.0...",
   "Loading kernel modules...................[OK]",
   "Mounting root filesystem.................[OK]",
   "Starting network interface...............[OK]",

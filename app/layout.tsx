@@ -1,16 +1,27 @@
 // app/layout.tsx
 
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, Fira_Code, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
-import React, { ReactNode } from "react";
-import { AuthProvider } from "@/components/providers/auth-provider";
 import { Toaster } from "react-hot-toast";
+import { SettingsProvider } from "@/components/providers/settings-provider";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
-  variable: "--font-mono",
+  variable: "--font-jetbrains",
+});
+
+const firaCode = Fira_Code({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-fira",
+});
+
+const sourceCodePro = Source_Code_Pro({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-source-code",
 });
 
 export const metadata: Metadata = {
@@ -24,9 +35,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AuthProvider>
-      <html lang="en" className="dark">
-        <body className={`${jetbrainsMono.variable} font-mono antialiased bg-background text-foreground h-screen overflow-hidden`}>
+    <html lang="en" className="dark">
+      <body className={`${jetbrainsMono.variable} ${firaCode.variable} ${sourceCodePro.variable} antialiased text-foreground h-screen overflow-hidden`}>
+        <SettingsProvider>
           <script
             type="module"
             defer
@@ -34,8 +45,8 @@ export default function RootLayout({
           ></script>
           {children}
           <Toaster position="bottom-right" />
-        </body>
-      </html>
-    </AuthProvider>
+        </SettingsProvider>
+      </body>
+    </html>
   );
 }

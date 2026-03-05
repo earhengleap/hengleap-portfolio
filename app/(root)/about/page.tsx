@@ -71,10 +71,11 @@ import { Developer, Experience, Interest } from '@/types/developer';
           </div>
           <button
             onClick={handleDownloadCV}
-            className="flex items-center gap-2 text-xs bg-primary/20 text-primary hover:bg-primary hover:text-white px-3 py-1 rounded transition-colors"
+            className="flex items-center gap-2 text-xs bg-primary/20 text-primary hover:bg-primary hover:text-white px-2 sm:px-3 py-1 rounded transition-colors"
           >
-            <Download className="w-3 h-3" />
-            Execute downloadResume()
+            <Download className="w-3 h-3 shrink-0" />
+            <span className="hidden sm:inline">Execute downloadResume()</span>
+            <span className="sm:hidden">Download CV</span>
           </button>
         </div>
 

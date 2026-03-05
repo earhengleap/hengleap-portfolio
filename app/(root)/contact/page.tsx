@@ -128,7 +128,7 @@ export default function ContactPage() {
           </div>
           <div className="text-xs text-green-500 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            CONNECTED
+            <span className="hidden sm:inline">CONNECTED</span>
           </div>
         </div>
 
