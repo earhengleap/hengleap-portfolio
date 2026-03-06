@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GlobalContextMenu } from "@/components/layout/global-context-menu";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { ExplorerContextMenu } from "@/components/layout/explorer-context-menu";
+import { ShortcutsModal } from "@/components/layout/shortcuts-modal";
 import { Code, Terminal as TerminalIcon } from "lucide-react";
 import Image from "next/image";
 import { Terminal, TerminalTheme } from "@/components/layout/terminal";
@@ -25,6 +26,7 @@ const ALL_POSSIBLE_TABS = [
   { name: "skills.md", path: "/skills" },
   { name: "contact.sh", path: "/contact" },
   { name: "settings.json", path: "/settings.json" },
+  { name: "monkeytype.tsx", path: "/monkeytype" },
 ];
 
 const DEFAULT_TABS: { name: string, path: string }[] = [];
@@ -32,7 +34,8 @@ const DEFAULT_TABS: { name: string, path: string }[] = [];
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const { setTheme, setFont } = useSettings();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<PanelType>("explorer");
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [commandPaletteInitialQuery, setCommandPaletteInitialQuery] = useState("");
   const [globalContextMenu, setGlobalContextMenu] = useState<{ x: number, y: number } | null>(null);
@@ -51,8 +54,8 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [deleteConfirmPath, setDeleteConfirmPath] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  // Visitors State
-  const [visitorId] = useState(() => `v-${Math.random().toString(36).substr(2, 9)}`);
+  // Visitors State — use a ref so the ID is stable from first mount (no re-render cycle)
+  const visitorIdRef = useRef<string>("");
   const [visitorName, setVisitorName] = useState("");
   const [visitorColor, setVisitorColor] = useState("");
   const [otherVisitors, setOtherVisitors] = useState<{ id: string; name: string; color: string; x: number; y: number; lastUpdate: number }[]>([]);
@@ -70,6 +73,9 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    // Initialize Visitor ID immediately on client — use ref to avoid re-render cycles
+    visitorIdRef.current = `v-${Math.random().toString(36).substr(2, 9)}`;
+
     const savedFiles = localStorage.getItem("hengleap-virtual-files");
     const savedFolders = localStorage.getItem("hengleap-virtual-folders");
     const savedTerminalTheme = localStorage.getItem("hengleap-terminal-theme") as TerminalTheme;
@@ -100,42 +106,35 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Initialize Visitor
-    const savedName = localStorage.getItem("hengleap-visitor-name");
-    const savedColor = localStorage.getItem("hengleap-visitor-color");
+    const name = getRandomName();
+    const color = getRandomColor();
+    setVisitorName(name);
+    setVisitorColor(color);
 
-    if (savedName) {
-      setVisitorName(savedName);
-    } else {
-      const name = getRandomName();
-      setVisitorName(name);
-      localStorage.setItem("hengleap-visitor-name", name);
-    }
+    // We don't save name/color to localStorage anymore to ensure uniqueness on return
+    // but we can save the ID if we wanted to (currently visitorId is random per session)
 
-    if (savedColor) {
-      setVisitorColor(savedColor);
-    } else {
-      const color = getRandomColor();
-      setVisitorColor(color);
-      localStorage.setItem("hengleap-visitor-color", color);
-    }
 
     setIsLoaded(true);
   }, []);
 
   useEffect(() => {
     if (isLoaded && visitorName) {
-      localStorage.setItem("hengleap-visitor-name", visitorName);
-      // Notify other tabs about name change
-      broadcastChannelRef.current?.postMessage({
-        type: 'update',
-        id: visitorId,
-        name: visitorName,
-        color: visitorColor,
-        x: -100, // invisible initially
-        y: -100
-      });
+      // Notify other tabs about name and presence
+      try {
+        broadcastChannelRef.current?.postMessage({
+          type: 'update',
+          id: visitorIdRef.current,
+          name: visitorName,
+          color: visitorColor,
+          x: -100,
+          y: -100
+        });
+      } catch (err) {
+        // ignore
+      }
     }
-  }, [visitorName, isLoaded, visitorId, visitorColor]);
+  }, [visitorName, isLoaded, visitorColor]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -176,10 +175,18 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (isInitialLoad.current) {
       isInitialLoad.current = false;
-      if (pathname === "/") {
-        userClosedTabRef.current = "/";
-        return; // Leave workspace empty on initial load of the home page
+      // Initial panel sync (active icon in activity bar)
+      if (pathname === "/monkeytype") {
+        setActivePanel("monkeytype");
+      } else if (pathname === "/settings.json") {
+        setActivePanel("settings");
+      } else if (pathname === "/") {
+        setActivePanel("explorer");
+        // Open home tab on the very first client load at "/"
+        const homeTab = ALL_POSSIBLE_TABS.find(t => t.path === "/");
+        if (homeTab) setOpenTabs([homeTab]);
       }
+      return; // Skip the rest of the effect on initial load
     }
 
     // If we just clicked close on a tab and it was the active tab, userClosedTabRef will equal pathname
@@ -187,6 +194,8 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    // Capture BEFORE clearing — non-null means system auto-navigated here after a tab close
+    const wasClosedTabNavigation = userClosedTabRef.current;
     userClosedTabRef.current = null;
 
     let matchedTab = ALL_POSSIBLE_TABS.find(t => t.path === pathname || (pathname === "/settings.json" && t.path === "/settings.json"));
@@ -202,25 +211,24 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    // Special fix: If we are on home ("/"), we shouldn't force open the settings tab or unneeded tabs
     if (matchedTab && matchedTab.path !== "/") {
+      // Any non-home tab: always add when navigated to
       setOpenTabs(prev => {
-        // If we are on home and openTabs is empty, we don't necessarily want to force the home tab to open alongside others
         if (!prev.find(t => t.path === matchedTab!.path)) {
           return [...prev, matchedTab!];
         }
         return prev;
       });
     } else if (matchedTab && matchedTab.path === "/") {
-      setOpenTabs(prev => {
-        if (!prev.find(t => t.path === "/") && prev.length === 0) {
-          return []; // Dont force open home tab if we just want a clear workspace
-        }
-        if (!prev.find(t => t.path === "/") && prev.length > 0) {
-          return [...prev, matchedTab!];
-        }
-        return prev;
-      })
+      // Home tab: only add if user explicitly navigated here (not auto-redirected after closing a tab)
+      if (!wasClosedTabNavigation) {
+        setOpenTabs(prev => {
+          if (!prev.find(t => t.path === "/")) {
+            return [...prev, matchedTab!];
+          }
+          return prev;
+        });
+      }
     }
   }, [pathname]);
 
@@ -298,11 +306,25 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         e.preventDefault();
         setIsTerminalOpen(prev => !prev);
       }
+
+      // Ctrl + / for Shortcuts Modal
+      if (e.ctrlKey && (e.key === '/' || e.key === '?')) {
+        e.preventDefault();
+        setShowShortcuts(prev => !prev);
+      }
+
+      // Escape to close active modals
+      if (e.key === 'Escape') {
+        if (showShortcuts) {
+          e.preventDefault();
+          setShowShortcuts(false);
+        }
+      }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [openTabs, untitledCount, pathname, router, virtualFiles]);
+  }, [openTabs, untitledCount, pathname, router, virtualFiles, showShortcuts]);
 
   // Real-time Visitor Sync (BroadcastChannel)
   useEffect(() => {
@@ -314,7 +336,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
     bc.onmessage = (event) => {
       const { type, id, name, color, x, y } = event.data;
 
-      if (id === visitorId) return; // Ignore own messages
+      if (id === visitorIdRef.current) return; // Ignore own messages
 
       if (type === 'update' || type === 'move') {
         setOtherVisitors(prev => {
@@ -339,28 +361,36 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       bc.close();
+      if (broadcastChannelRef.current === bc) {
+        broadcastChannelRef.current = null;
+      }
       clearInterval(cleanup);
     };
-  }, [visitorId]);
+  }, []); // Run once — visitorIdRef.current is always accessible via closure
 
   // Track and Broadcast mouse position
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!broadcastChannelRef.current || !visitorName) return;
 
-      broadcastChannelRef.current.postMessage({
-        type: 'move',
-        id: visitorId,
-        name: visitorName,
-        color: visitorColor,
-        x: e.clientX,
-        y: e.clientY
-      });
+      try {
+        broadcastChannelRef.current.postMessage({
+          type: 'move',
+          id: visitorIdRef.current,
+          name: visitorName,
+          color: visitorColor,
+          x: e.clientX,
+          y: e.clientY
+        });
+      } catch (err) {
+        // Channel might be closed during cleanup/HMR
+        console.warn("BroadcastChannel postMessage failed:", err);
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [visitorId, visitorName, visitorColor]);
+  }, [visitorName, visitorColor]); // visitorIdRef is a ref, not state — no need to include
 
   const handleMenuToggle = () => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -597,6 +627,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="no-global-context flex h-full">
           <ActivityBar
             activePanel={activePanel}
+            visitorCount={otherVisitors.length}
             onPanelChange={(panel) => {
               if (panel === "settings") {
                 toggleSettings();
@@ -637,6 +668,14 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
             visitorName={visitorName}
             setVisitorName={setVisitorName}
             otherVisitors={otherVisitors}
+            onOpenTab={(path) => {
+              // Called when user clicks a file that's already the current route.
+              // router.push is a no-op in that case, so we manually ensure the tab exists.
+              const tab = ALL_POSSIBLE_TABS.find(t => t.path === path);
+              if (tab) {
+                setOpenTabs(prev => prev.find(t => t.path === path) ? prev : [...prev, tab]);
+              }
+            }}
           />
         </div>
         <div className="flex flex-col flex-1 h-full overflow-hidden w-full max-w-full min-w-0 bg-[#1e1e1e]/60 relative">
@@ -651,211 +690,219 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
               />
             </div>
           )}
-          <AnimatePresence initial={false}>
-            {!(isTerminalOpen && isTerminalMaximized) && (
-              <motion.main
-                initial={{ height: "100%", opacity: 1 }}
-                animate={{
-                  height: "100%",
-                  opacity: 1,
-                  display: "block"
-                }}
-                exit={{
-                  height: 0,
-                  opacity: 0,
-                  transition: { duration: 0.3, ease: "easeInOut" }
-                }}
-                className="flex-1 overflow-y-auto relative z-0"
-              >
-                {openTabs.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500 bg-[#1e1e1e]">
-                    {/* Empty Workspace State */}
-                    <h1 className="text-4xl md:text-5xl font-light text-[#3c3c3c] mb-12 select-none">Hengleap EAR</h1>
+          {/* Wrap main content area with no-global-context to allow native right click for copy/paste */}
+          <div className="flex-1 overflow-hidden relative w-full h-full no-global-context">
+            <AnimatePresence initial={false}>
+              {!(isTerminalOpen && isTerminalMaximized) && (
+                <motion.main
+                  initial={{ height: "100%", opacity: 1 }}
+                  animate={{
+                    height: "100%",
+                    opacity: 1,
+                    display: "block"
+                  }}
+                  exit={{
+                    height: 0,
+                    opacity: 0,
+                    transition: { duration: 0.3, ease: "easeInOut" }
+                  }}
+                  className="flex-1 overflow-y-auto relative z-0"
+                >
+                  {openTabs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 bg-[#1e1e1e]">
+                      {/* Empty Workspace State */}
+                      <h1 className="text-4xl md:text-5xl font-light text-[#3c3c3c] mb-12 select-none">Hengleap EAR</h1>
 
-                    <div className="grid grid-cols-[1fr_auto] gap-x-8 gap-y-3 text-sm">
-                      <div className="text-right text-gray-400 my-auto">Show Explorer</div>
-                      <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+E</div>
+                      <div className="grid grid-cols-[1fr_auto] gap-x-8 gap-y-3 text-sm">
+                        <div className="text-right text-gray-400 my-auto">Show Explorer</div>
+                        <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+E</div>
 
-                      <div className="text-right text-gray-400 my-auto">Global Search</div>
-                      <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+F</div>
+                        <div className="text-right text-gray-400 my-auto">Global Search</div>
+                        <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+Shift+F</div>
 
-                      <div className="text-right text-gray-400 my-auto">Open Settings</div>
-                      <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+,</div>
-                    </div>
+                        <div className="text-right text-gray-400 my-auto">Open Settings</div>
+                        <div className="text-left font-mono text-gray-600 font-semibold bg-[#2d2d2d] px-2 py-0.5 rounded w-max">Ctrl+,</div>
+                      </div>
 
-                    <div className="mt-16 text-xs text-blue-500/50 italic opacity-50 hover:opacity-100 transition-opacity user-select-none">
+                      <div className="mt-16 text-xs text-blue-500/50 italic opacity-50 hover:opacity-100 transition-opacity user-select-none">
                           // Open a file from the explorer to begin
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <AnimatePresence>
-                    <motion.div
-                      key={pathname}
-                      initial={{ opacity: 0, scale: pathname === "/settings.json" ? 0.95 : 1, y: pathname === "/settings.json" ? 0 : 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: pathname === "/settings.json" ? 0.95 : 1, y: pathname === "/settings.json" ? 0 : -10, transition: { duration: 0.15, ease: "easeIn" } }}
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                      className="p-4 md:p-8 h-full"
-                    >
-                      {pathname.startsWith("/Untitled-") || pathname.startsWith("/virtual/") ? (
-                        (() => {
-                          const activeVirtualFile = virtualFiles.find(f => f.path === pathname);
-                          const displayName = activeVirtualFile ? activeVirtualFile.name : pathname.replace("/", "");
-                          return (
-                            <div className="w-full h-full flex flex-col font-mono text-sm animate-in fade-in duration-300">
-                              <div className="flex items-center text-gray-400 mb-4 pb-2 border-b border-[#333]/50 justify-between">
-                                <div className="flex items-center">
-                                  <Code className="w-4 h-4 mr-2 text-blue-400" />
-                                  <span className="text-gray-500 mr-2">{"{ }"}</span>
-                                  {displayName} <span className="text-gray-600 ml-2 text-xs">(Virtual File)</span>
+                  ) : (
+                    <AnimatePresence>
+                      <motion.div
+                        key={pathname}
+                        initial={{ opacity: 0, scale: pathname === "/settings.json" ? 0.95 : 1, y: pathname === "/settings.json" ? 0 : 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: pathname === "/settings.json" ? 0.95 : 1, y: pathname === "/settings.json" ? 0 : -10, transition: { duration: 0.15, ease: "easeIn" } }}
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                        className="p-4 md:p-8 h-full"
+                      >
+                        {pathname.startsWith("/Untitled-") || pathname.startsWith("/virtual/") ? (
+                          (() => {
+                            const activeVirtualFile = virtualFiles.find(f => f.path === pathname);
+                            const displayName = activeVirtualFile ? activeVirtualFile.name : pathname.replace("/", "");
+                            return (
+                              <div className="w-full h-full flex flex-col font-mono text-sm animate-in fade-in duration-300">
+                                <div className="flex items-center text-gray-400 mb-4 pb-2 border-b border-[#333]/50 justify-between">
+                                  <div className="flex items-center">
+                                    <Code className="w-4 h-4 mr-2 text-blue-400" />
+                                    <span className="text-gray-500 mr-2">{"{ }"}</span>
+                                    {displayName} <span className="text-gray-600 ml-2 text-xs">(Virtual File)</span>
+                                  </div>
+                                  <div className="text-xs text-blue-400/50 flex gap-4">
+                                    <span>Ctrl+S to save/rename</span>
+                                  </div>
                                 </div>
-                                <div className="text-xs text-blue-400/50 flex gap-4">
-                                  <span>Ctrl+S to save/rename</span>
-                                </div>
+                                <textarea
+                                  className="flex-1 bg-transparent border-none outline-none resize-none text-gray-300 leading-relaxed custom-scrollbar focus:ring-0"
+                                  value={activeVirtualFile?.content || ""}
+                                  onChange={(e) => {
+                                    const newContent = e.target.value;
+                                    setVirtualFiles(prev => prev.map(f => f.path === pathname ? { ...f, content: newContent } : f));
+                                  }}
+                                  placeholder="// Start typing your code here..."
+                                  spellCheck={false}
+                                />
                               </div>
-                              <textarea
-                                className="flex-1 bg-transparent border-none outline-none resize-none text-gray-300 leading-relaxed custom-scrollbar focus:ring-0"
-                                value={activeVirtualFile?.content || ""}
-                                onChange={(e) => {
-                                  const newContent = e.target.value;
-                                  setVirtualFiles(prev => prev.map(f => f.path === pathname ? { ...f, content: newContent } : f));
-                                }}
-                                placeholder="// Start typing your code here..."
-                                spellCheck={false}
-                              />
-                            </div>
-                          )
-                        })()
-                      ) : (
-                        children
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
-                )}
-              </motion.main>
-            )}
-          </AnimatePresence>
+                            )
+                          })()
+                        ) : (
+                          children
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                  )}
+                </motion.main>
+              )}
+            </AnimatePresence>
 
-          {/* Terminal View */}
-          <div className="no-global-context">
-            <Terminal
-              isOpen={isTerminalOpen}
-              onClose={() => setIsTerminalOpen(false)}
-              isMaximized={isTerminalMaximized}
-              onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
-              theme={terminalTheme}
-              onThemeChange={setTerminalTheme}
-              font={terminalFont}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Floating UI Elements */}
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        files={[...ALL_POSSIBLE_TABS, ...virtualFiles]}
-        onSelect={(path: string) => router.push(path)}
-        initialQuery={commandPaletteInitialQuery}
-        setTheme={setTheme}
-        setFont={setFont}
-        terminalTheme={terminalTheme}
-        setTerminalTheme={setTerminalTheme}
-        terminalFont={terminalFont}
-        setTerminalFont={setTerminalFont}
-      />
-
-      {globalContextMenu && (
-        <GlobalContextMenu
-          x={globalContextMenu.x}
-          y={globalContextMenu.y}
-          onClose={() => setGlobalContextMenu(null)}
-          onNewFile={handleNewFile}
-          onOpenFile={() => setIsCommandPaletteOpen(true)}
-          onNewTerminal={() => setIsTerminalOpen(true)}
-        />
-      )}
-
-      {explorerContextMenu && (
-        <ExplorerContextMenu
-          x={explorerContextMenu.x}
-          y={explorerContextMenu.y}
-          itemRef={explorerContextMenu.item as any}
-          onClose={() => setExplorerContextMenu(null)}
-          onNewFile={handleNewFile}
-          onNewFolder={handleNewFolder}
-          onRename={(path, currentName) => {
-            const isFolder = virtualFolders.some(f => f.path === path);
-            if (isFolder) {
-              setRenamingFolderExt(path);
-              setRenameFolderName(currentName);
-            } else {
-              setRenamingFileExt(path);
-              setRenameFileName(currentName);
-            }
-          }}
-          onDelete={handleDeleteVirtualItem}
-        />
-      )}
-
-      {/* Modals */}
-      {deleteConfirmPath && (
-        <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
-            <h3 className="text-lg font-semibold text-gray-200 mb-2">
-              Delete {deleteConfirmPath.includes("?folder=true") ? "Folder" : "File"}
-            </h3>
-            <p className="text-sm text-gray-400 mb-6">
-              Are you sure you want to delete this {deleteConfirmPath.includes("?folder=true") ? "folder and all its contents" : "file"}? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteConfirmPath(null)}
-                className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteVirtualItem}
-                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
-              >
-                Delete
-              </button>
+            {/* Terminal View */}
+            <div className="no-global-context">
+              <Terminal
+                isOpen={isTerminalOpen}
+                onClose={() => setIsTerminalOpen(false)}
+                isMaximized={isTerminalMaximized}
+                onToggleMaximize={() => setIsTerminalMaximized(!isTerminalMaximized)}
+                theme={terminalTheme}
+                onThemeChange={setTerminalTheme}
+                font={terminalFont}
+              />
             </div>
           </div>
         </div>
-      )}
 
-      {alertMessage && (
-        <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
-            <h3 className="text-lg font-semibold text-gray-200 mb-2">Notice</h3>
-            <p className="text-sm text-gray-400 mb-6">{alertMessage}</p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setAlertMessage(null)}
-                className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Floating UI Elements */}
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          files={[...ALL_POSSIBLE_TABS, ...virtualFiles]}
+          onSelect={(path: string) => router.push(path)}
+          initialQuery={commandPaletteInitialQuery}
+          setTheme={setTheme}
+          setFont={setFont}
+          terminalTheme={terminalTheme}
+          setTerminalTheme={setTerminalTheme}
+          terminalFont={terminalFont}
+          setTerminalFont={setTerminalFont}
+        />
 
-
-      {/* Visitor Cursors Layer */}
-      <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
-        {otherVisitors.map(visitor => (
-          <VisitorCursor
-            key={visitor.id}
-            name={visitor.name}
-            color={visitor.color}
-            x={visitor.x}
-            y={visitor.y}
+        {globalContextMenu && (
+          <GlobalContextMenu
+            x={globalContextMenu.x}
+            y={globalContextMenu.y}
+            onClose={() => setGlobalContextMenu(null)}
+            onNewFile={handleNewFile}
+            onOpenFile={() => setIsCommandPaletteOpen(true)}
+            onNewTerminal={() => setIsTerminalOpen(true)}
           />
-        ))}
+        )}
+
+        {explorerContextMenu && (
+          <ExplorerContextMenu
+            x={explorerContextMenu.x}
+            y={explorerContextMenu.y}
+            itemRef={explorerContextMenu.item as any}
+            onClose={() => setExplorerContextMenu(null)}
+            onNewFile={handleNewFile}
+            onNewFolder={handleNewFolder}
+            onRename={(path, currentName) => {
+              const isFolder = virtualFolders.some(f => f.path === path);
+              if (isFolder) {
+                setRenamingFolderExt(path);
+                setRenameFolderName(currentName);
+              } else {
+                setRenamingFileExt(path);
+                setRenameFileName(currentName);
+              }
+            }}
+            onDelete={handleDeleteVirtualItem}
+          />
+        )}
+
+        {/* Modals */}
+        {deleteConfirmPath && (
+          <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
+              <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                Delete {deleteConfirmPath.includes("?folder=true") ? "Folder" : "File"}
+              </h3>
+              <p className="text-sm text-gray-400 mb-6">
+                Are you sure you want to delete this {deleteConfirmPath.includes("?folder=true") ? "folder and all its contents" : "file"}? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirmPath(null)}
+                  className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteVirtualItem}
+                  className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {alertMessage && (
+          <div className="fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
+              <h3 className="text-lg font-semibold text-gray-200 mb-2">Notice</h3>
+              <p className="text-sm text-gray-400 mb-6">{alertMessage}</p>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setAlertMessage(null)}
+                  className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+        {/* Visitor Cursors Layer */}
+        <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
+          {otherVisitors.map(visitor => (
+            <VisitorCursor
+              key={visitor.id}
+              name={visitor.name}
+              color={visitor.color}
+              x={visitor.x}
+              y={visitor.y}
+            />
+          ))}
+        </div>
+
+        <ShortcutsModal
+          isOpen={showShortcuts}
+          onClose={() => setShowShortcuts(false)}
+        />
       </div>
     </div>
   );

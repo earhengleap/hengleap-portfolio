@@ -35,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${jetbrainsMono.variable} ${firaCode.variable} ${sourceCodePro.variable} antialiased text-foreground h-screen overflow-hidden`}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${jetbrainsMono.variable} ${firaCode.variable} ${sourceCodePro.variable} antialiased text-foreground h-screen overflow-hidden`} suppressHydrationWarning>
         <SettingsProvider>
           <script
             type="module"
