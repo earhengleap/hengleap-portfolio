@@ -19,20 +19,41 @@ const WORD_POOL = [
     "api", "endpoint", "request", "response", "json", "xml", "html", "css", "scss", "less", "stylus"
 ];
 
+const KHMER_WORD_POOL = [
+    "សួស្តី", "អរគុណ", "កម្ពុជា", "ភ្នំពេញ", "ស្រលាញ់", "បច្ចេកវិទ្យា", "កម្មវិធី", "កូដ", "ទូរស័ព្ទ", "កុំព្យូទ័រ",
+    "ការងារ", "សាលា", "រៀន", "អាន", "សរសេរ", "និយាយ", "ស្តាប់", "យល់", "ដឹង", "ធ្វើ",
+    "បាន", "មាន", "អត់", "មិន", "ល្អ", "ច្រើន", "តិច", "ធំ", "តូច", "វែង",
+    "ខ្លី", "ថ្ងៃមិញ", "ថ្ងៃនេះ", "ថ្ងៃស្អែក", "ពេល", "ម៉ោង", "នាទី", "វិនាទី", "ប៉ុន្មាន", "ប្រហែល",
+    "ប្រាកដ", "ច្បាស់", "ត្រឹមត្រូវ", "ខុស", "ត្រូវ", "ថ្មី", "ចាស់", "ស្អាត", "លឿន", "យឺត",
+    "សប្បាយ", "ពិបាក", "ងាយ", "ស្រួល", "ជួយ", "សុំ", "ឲ្យ", "យក", "ទុក", "ចាំ",
+    "ភ្លេច", "គិត", "ស្មាន", "ជឿ", "សង្ឃឹម", "ចង់", "ត្រូវការ", "អាច", "គួរ", "មុខ",
+    "ក្រោយ", "លើ", "ក្រោម", "ក្នុង", "ក្រៅ", "ឆ្វេង", "ស្តាំ", "កណ្តាល", "គៀន", "ជិត",
+    "ឆ្ងាយ", "ដើរ", "រត់", "ឈរ", "អង្គុយ", "ដេក", "ញ៉ាំ", "ផឹក", "មើល", "ឃើញ",
+    "ទិញ", "លក់", "ចំណាយ", "ចំណេញ", "ខាត", "ថ្លៃ", "ថោក", "ប្រាក់", "លុយ", "ធនាគារ"
+];
+
 const KEYBOARD_ROWS = [
-    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
-    ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
-    ["z", "x", "c", "v", "b", "n", "m"],
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="],
+    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\"],
+    ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'"],
+    ["shift", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "shift"],
     ["space"]
 ];
 
-import { useMonkeyTypeStore, GameMode, GameConfig } from "@/hooks/use-monkeytype-store";
+const KHMER_KEY_MAP: Record<string, { base: string, shift: string }> = {
+    "1": { base: "១", shift: "!" }, "2": { base: "២", shift: "ៗ" }, "3": { base: "៣", shift: "\"" }, "4": { base: "៤", shift: "៛" }, "5": { base: "៥", shift: "%" }, "6": { base: "៦", shift: "៍" }, "7": { base: "៧", shift: "័" }, "8": { base: "៨", shift: "៏" }, "9": { base: "៩", shift: "(" }, "0": { base: "០", shift: ")" }, "-": { base: "ឥ", shift: "៌" }, "=": { base: "ឱ្យ", shift: "=" },
+    "q": { base: "ឆ", shift: "ឈ" }, "w": { base: "ឹ", shift: "ឺ" }, "e": { base: "េ", shift: "ែ" }, "r": { base: "រ", shift: "ឬ" }, "t": { base: "ត", shift: "ទ" }, "y": { base: "យ", shift: "ួ" }, "u": { base: "ុ", shift: "ូ" }, "i": { base: "ិ", shift: "ី" }, "o": { base: "ោ", shift: "ៅ" }, "p": { base: "ផ", shift: "ភ" }, "[": { base: "ៀ", shift: "ឿ" }, "]": { base: "ឪ", shift: "ឧ" }, "\\": { base: "ឮ", shift: "ឭ" },
+    "a": { base: "ា", shift: "ាំ" }, "s": { base: "ស", shift: "ៃ" }, "d": { base: "ដ", shift: "ឌ" }, "f": { base: "ថ", shift: "ធ" }, "g": { base: "ង", shift: "អ" }, "h": { base: "ហ", shift: "ះ" }, "j": { base: "្", shift: "ញ" }, "k": { base: "ក", shift: "គ" }, "l": { base: "ល", shift: "ឡ" }, ";": { base: "ើ", shift: "ោះ" }, "'": { base: "់", shift: "៉" },
+    "z": { base: "ឋ", shift: "ឍ" }, "x": { base: "ខ", shift: "ឃ" }, "c": { base: "ច", shift: "ជ" }, "v": { base: "វ", shift: "េះ" }, "b": { base: "ប", shift: "ព" }, "n": { base: "ន", shift: "ណ" }, "m": { base: "ម", shift: "ំ" }, ",": { base: "ុំ", shift: "ុះ" }, ".": { base: "។", shift: "៕" }, "/": { base: "៊", shift: "?" }
+};
+
+import { useMonkeyTypeStore, GameMode, GameConfig, Language } from "@/hooks/use-monkeytype-store";
 
 export default function MonkeyTypePage() {
     const {
-        mode, config, stats, timeLeft, isActive, isFinished,
+        mode, config, language, stats, timeLeft, isActive, isFinished,
         setIsActive, setIsFinished, setTimeLeft, setStats, resetLiveState, addHistory,
-        setMode, setConfig
+        setMode, setConfig, setLanguage
     } = useMonkeyTypeStore();
 
     const [words, setWords] = useState<string[]>([]);
@@ -41,6 +62,7 @@ export default function MonkeyTypePage() {
 
     const [caretPos, setCaretPos] = useState({ top: 0, left: 0 });
     const [activeKey, setActiveKey] = useState<string | null>(null);
+    const [isShiftPressed, setIsShiftPressed] = useState(false);
     const [lineOffset, setLineOffset] = useState(0);
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -51,11 +73,12 @@ export default function MonkeyTypePage() {
     const generateWords = useCallback(() => {
         const count = mode === "words" ? (config as number) : 150;
         const generated: string[] = [];
+        const pool = language === "khmer" ? KHMER_WORD_POOL : WORD_POOL;
         for (let i = 0; i < count; i++) {
-            generated.push(WORD_POOL[Math.floor(Math.random() * WORD_POOL.length)]);
+            generated.push(pool[Math.floor(Math.random() * pool.length)]);
         }
         setWords(generated);
-    }, [mode, config]);
+    }, [mode, config, language]);
 
     useEffect(() => {
         generateWords();
@@ -85,7 +108,8 @@ export default function MonkeyTypePage() {
             wpm: stats.wpm,
             accuracy: stats.accuracy,
             mode,
-            config
+            config,
+            language
         });
     };
 
@@ -145,15 +169,31 @@ export default function MonkeyTypePage() {
             }
 
             const key = e.key.toLowerCase();
+            const originalKey = e.key;
+
+            if (e.key === "Shift") setIsShiftPressed(true);
+
             if (key === " ") setActiveKey("space");
-            else setActiveKey(key);
+            else {
+                let matchedQwerty = key;
+                for (const [qKey, chars] of Object.entries(KHMER_KEY_MAP)) {
+                    if (originalKey === chars.base || originalKey === chars.shift) {
+                        matchedQwerty = qKey;
+                        break;
+                    }
+                }
+                setActiveKey(matchedQwerty);
+            }
 
             if (document.activeElement !== inputRef.current && !["Tab", "Enter", "Escape", "Shift", "Control", "Alt", "Meta"].includes(e.key)) {
                 inputRef.current?.focus();
             }
         };
 
-        const handleGlobalKeyUp = () => setActiveKey(null);
+        const handleGlobalKeyUp = (e: KeyboardEvent) => {
+            if (e.key === "Shift") setIsShiftPressed(false);
+            setActiveKey(null);
+        };
 
         window.addEventListener("keydown", handleGlobalKeyDown);
         window.addEventListener("keyup", handleGlobalKeyUp);
@@ -164,9 +204,59 @@ export default function MonkeyTypePage() {
     }, [resetTest]);
 
     // Caret and 3-Line Shifting Logic
+    const targetText = useMemo(() => words.join(" "), [words]);
+
+    // Split target text into visual grapheme clusters to avoid broken combining characters in Khmer
+    const clusters = useMemo(() => {
+        if (!targetText) return [];
+
+        // Use Intl.Segmenter with a fallback/manual check for Khmer combining marks
+        const segmenter = new Intl.Segmenter(language === 'khmer' ? 'km' : 'en', { granularity: 'grapheme' });
+        const rawSegments = Array.from(segmenter.segment(targetText)).map(s => s.segment);
+
+        if (language !== 'khmer') return rawSegments;
+
+        // Manual re-clustering to ensure Khmer vowels and signs always attach to a preceding consonant
+        const khmerClusters: string[] = [];
+        for (const seg of rawSegments) {
+            const firstChar = seg.charCodeAt(0);
+            const isCombiningMark = (firstChar >= 0x17B4 && firstChar <= 0x17D3);
+
+            if (isCombiningMark && khmerClusters.length > 0) {
+                khmerClusters[khmerClusters.length - 1] += seg;
+            } else if (khmerClusters.length > 0 && khmerClusters[khmerClusters.length - 1].endsWith('\u17D2')) {
+                // If previous segment ended with Coeng sign, this consonant must be part of that cluster
+                khmerClusters[khmerClusters.length - 1] += seg;
+            } else {
+                khmerClusters.push(seg);
+            }
+        }
+        return khmerClusters;
+    }, [targetText, language]);
+
+    // Map each cluster to its starting index in the raw string so we can track exact codepoint typing
+    const clusterIndexes = useMemo(() => {
+        let currentIndex = 0;
+        const indexes: number[] = [];
+        for (const cluster of clusters) {
+            indexes.push(currentIndex);
+            currentIndex += cluster.length;
+        }
+        return indexes;
+    }, [clusters]);
+
     useEffect(() => {
-        const activeCharIndex = userInput.length;
-        const activeCharElement = charRefs.current[activeCharIndex];
+        // Find the active cluster based on the user's current input length
+        let activeClusterIndex = 0;
+        for (let i = 0; i < clusterIndexes.length; i++) {
+            if (userInput.length >= clusterIndexes[i]) {
+                activeClusterIndex = i;
+            } else {
+                break;
+            }
+        }
+
+        const activeCharElement = charRefs.current[activeClusterIndex];
         if (activeCharElement && wordsRef.current) {
             const charRect = activeCharElement.getBoundingClientRect();
             const containerRect = wordsRef.current.getBoundingClientRect();
@@ -178,10 +268,10 @@ export default function MonkeyTypePage() {
 
             // 3-line scroll logic: if current char top is more than 2 lines down, shift
             const relativeTop = charRect.top - containerRect.top + lineOffset;
-            if (relativeTop > 80) { // Approx 2.5 lines (32px line height * 2.5)
-                setLineOffset(prev => prev - 40); // Shift by one line height
+            if (relativeTop > 110) { // Approx 2 lines (58px line height * 2)
+                setLineOffset(prev => prev - 58); // Shift by one full Khmer line height
             }
-        } else if (activeCharIndex === 0 && charRefs.current[0] && wordsRef.current) {
+        } else if (activeClusterIndex === 0 && charRefs.current[0] && wordsRef.current) {
             const charRect = charRefs.current[0].getBoundingClientRect();
             const containerRect = wordsRef.current.getBoundingClientRect();
             setCaretPos({
@@ -189,12 +279,10 @@ export default function MonkeyTypePage() {
                 left: charRect.left - containerRect.left
             });
         }
-    }, [userInput, words]);
-
-    const targetChars = useMemo(() => words.join(" ").split(""), [words]);
+    }, [userInput, words, clusters, clusterIndexes, lineOffset]);
 
     return (
-        <div className="h-full flex flex-col items-center justify-start pt-16 font-mono max-w-6xl mx-auto px-8 bg-[#323437] text-[#646669] overflow-hidden select-none" onClick={() => inputRef.current?.focus()}>
+        <div className={cn("h-full flex flex-col items-center justify-start pt-16 max-w-6xl mx-auto px-8 bg-[#323437] text-[#646669] overflow-hidden select-none", language === "khmer" ? "font-sans font-medium" : "font-mono")} onClick={() => inputRef.current?.focus()}>
             <AnimatePresence mode="wait">
                 {!isFinished ? (
                     <motion.div
@@ -215,7 +303,7 @@ export default function MonkeyTypePage() {
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-4 px-4">
+                            <div className="flex items-center gap-4 px-4 border-r border-[#646669]/20">
                                 {mode === "time" ? (
                                     [15, 30, 60, 120].map(t => (
                                         <button key={t} onClick={() => { setConfig(t as GameConfig); resetTest(); }} className={cn("hover:text-[#d1d0c5] transition-all", config === t ? "text-[#e2b714]" : "")}>
@@ -229,6 +317,15 @@ export default function MonkeyTypePage() {
                                         </button>
                                     ))
                                 )}
+                            </div>
+
+                            <div className="flex items-center gap-4 px-4">
+                                <button onClick={() => { setLanguage("english"); resetTest(); }} className={cn("hover:text-[#d1d0c5] transition-all", language === "english" ? "text-[#e2b714]" : "")}>
+                                    english
+                                </button>
+                                <button onClick={() => { setLanguage("khmer"); resetTest(); }} className={cn("hover:text-[#d1d0c5] transition-all", language === "khmer" ? "text-[#e2b714]" : "")}>
+                                    khmer
+                                </button>
                             </div>
                         </div>
 
@@ -248,7 +345,7 @@ export default function MonkeyTypePage() {
                                 ref={wordsRef}
                                 className="relative text-3xl leading-[40px] tracking-tight"
                             >
-                                {/* Caret */}
+                                {/* Caret: made slightly taller for Khmer stacks */}
                                 <motion.div
                                     animate={{ top: caretPos.top, left: caretPos.left, opacity: [1, 0, 1] }}
                                     transition={{
@@ -256,18 +353,37 @@ export default function MonkeyTypePage() {
                                         left: { type: "spring", stiffness: 400, damping: 35 },
                                         opacity: { repeat: Infinity, duration: 0.8 }
                                     }}
-                                    className="absolute w-[2px] h-[30px] bg-[#e2b714] rounded-full z-10 pointer-events-none mt-[5px]"
+                                    className="absolute w-[2px] h-[34px] bg-[#e2b714] rounded-full z-10 pointer-events-none mt-[3px]"
                                 />
 
                                 {/* Words Grid */}
-                                <div className="flex flex-wrap w-full">
-                                    {targetChars.map((char, i) => {
+                                <div className={cn("flex flex-wrap w-full", language === "khmer" ? "leading-[1.8] text-[32px] font-hanuman" : "leading-[40px] text-3xl")}>
+                                    {clusters.map((cluster, i) => {
+                                        const startIndex = clusterIndexes[i];
+                                        const endIndex = startIndex + cluster.length;
+
                                         let statusColor = "text-[#646669]";
                                         let underline = false;
 
-                                        if (i < userInput.length) {
-                                            if (userInput[i] === char) statusColor = "text-[#d1d0c5]";
-                                            else { statusColor = "text-[#ca4754]"; underline = true; }
+                                        // If user hasn't typed out this entire cluster yet
+                                        if (userInput.length > startIndex) {
+                                            const typedPart = userInput.substring(startIndex, Math.min(userInput.length, endIndex));
+                                            const targetPart = targetText.substring(startIndex, startIndex + typedPart.length);
+
+                                            // Check if all typed parts match
+                                            if (typedPart === targetPart) {
+                                                if (userInput.length >= endIndex) {
+                                                    // Fully typed and correct
+                                                    statusColor = "text-[#d1d0c5]";
+                                                } else {
+                                                    // Partially typed but correct so far (yellow)
+                                                    statusColor = "text-[#e2b714]";
+                                                }
+                                            } else {
+                                                // Contains wrong characters
+                                                statusColor = "text-[#ca4754]";
+                                                underline = true;
+                                            }
                                         }
 
                                         return (
@@ -276,7 +392,7 @@ export default function MonkeyTypePage() {
                                                 ref={el => { charRefs.current[i] = el; }}
                                                 className={cn("transition-colors duration-100", statusColor, underline && "border-b-2 border-[#ca4754]")}
                                             >
-                                                {char === " " ? "\u00A0" : char}
+                                                {cluster === " " ? "\u00A0" : cluster}
                                             </span>
                                         );
                                     })}
@@ -296,25 +412,48 @@ export default function MonkeyTypePage() {
                         </div>
 
                         {/* Premium Mechanical Keyboard Visualizer */}
-                        <div className="mt-8 flex flex-col gap-3 items-center opacity-40 hover:opacity-80 transition-all duration-500 transform hover:scale-[1.02]">
+                        <div className="mt-8 flex flex-col gap-3 items-center opacity-40 hover:opacity-80 transition-all duration-500 transform hover:scale-[1.02] font-mono">
                             {KEYBOARD_ROWS.map((row, i) => (
                                 <div key={i} className="flex gap-2">
-                                    {row.map(key => {
-                                        const isNext = targetChars[userInput.length]?.toLowerCase() === key || (targetChars[userInput.length] === " " && key === "space");
-                                        const isPressed = activeKey === key;
+                                    {row.map((qwertyKey, ki) => {
+                                        const mapping = KHMER_KEY_MAP[qwertyKey];
+                                        const remainingTarget = targetText.slice(userInput.length);
+                                        const isShiftKey = qwertyKey === "shift";
+
+                                        let isNext = false;
+                                        if (qwertyKey === "space") {
+                                            isNext = targetText[userInput.length] === " ";
+                                        } else if (language === "khmer" && mapping) {
+                                            isNext = remainingTarget.startsWith(mapping.base) || remainingTarget.startsWith(mapping.shift);
+                                        } else if (language === "khmer" && isShiftKey) {
+                                            // Highlight shift key if the next char is a shift character on any key, or if it's a visible space
+                                            isNext = Object.values(KHMER_KEY_MAP).some(m => m.shift !== m.base && remainingTarget.startsWith(m.shift)) || remainingTarget.startsWith(" ");
+                                        } else if (language === "english") {
+                                            isNext = targetText[userInput.length]?.toLowerCase() === qwertyKey;
+                                        }
+
+                                        const isPressed = activeKey === qwertyKey || (isShiftKey && isShiftPressed);
 
                                         return (
                                             <motion.div
-                                                key={key}
+                                                key={`${qwertyKey}-${ki}`}
                                                 animate={isPressed ? { scale: 0.9, y: 2 } : { scale: 1, y: 0 }}
                                                 className={cn(
-                                                    "h-11 px-3 flex items-center justify-center rounded-lg border-2 text-sm font-black uppercase transition-all duration-75 relative",
-                                                    key === "space" ? "w-72" : "w-11",
+                                                    "h-11 px-3 flex items-center justify-center rounded-lg border-2 text-sm font-black transition-all duration-75 relative",
+                                                    qwertyKey === "space" ? "w-72 uppercase" : (isShiftKey ? "min-w-[80px]" : "min-w-11"),
+                                                    language === "khmer" ? "font-hanuman font-normal" : "uppercase",
                                                     isNext ? "border-[#e2b714] text-[#e2b714] shadow-[0_0_15px_rgba(226,183,20,0.2)] bg-[#e2b714]/5" : "border-[#2c2e31] bg-[#2c2e31]/40 text-[#646669]/50",
                                                     isPressed ? "bg-[#e2b714] border-[#e2b714] text-[#323437] shadow-[0_0_30px_rgba(226,183,20,0.4)]" : "shadow-[0_4px_0_rgba(0,0,0,0.3)]"
                                                 )}
                                             >
-                                                {key !== "space" && key}
+                                                {qwertyKey !== "space" ? (
+                                                    language === "khmer" && mapping ? (
+                                                        <div className="flex flex-col items-center leading-tight">
+                                                            <span className="text-[10px] opacity-40">{mapping.shift}</span>
+                                                            <span className="text-base">{mapping.base}</span>
+                                                        </div>
+                                                    ) : qwertyKey
+                                                ) : "space"}
                                                 {isNext && !isPressed && <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#e2b714] rounded-full animate-ping" />}
                                             </motion.div>
                                         );

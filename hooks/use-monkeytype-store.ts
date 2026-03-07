@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export type GameMode = "time" | "words";
 export type GameConfig = 15 | 30 | 60 | 120 | 10 | 25 | 50 | 100;
+export type Language = "english" | "khmer";
 
 export interface TypingStats {
     wpm: number;
@@ -17,6 +18,7 @@ export interface RunHistory {
     accuracy: number;
     mode: GameMode;
     config: number;
+    language: Language;
     date: number;
 }
 
@@ -24,8 +26,10 @@ interface MonkeyTypeState {
     // Config
     mode: GameMode;
     config: GameConfig;
+    language: Language;
     setMode: (mode: GameMode) => void;
     setConfig: (config: GameConfig) => void;
+    setLanguage: (language: Language) => void;
 
     // Live State
     isActive: boolean;
@@ -50,8 +54,10 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
         (set) => ({
             mode: "time",
             config: 30,
+            language: "english",
             setMode: (mode) => set({ mode }),
             setConfig: (config) => set({ config }),
+            setLanguage: (language) => set({ language }),
 
             isActive: false,
             isFinished: false,
@@ -87,6 +93,7 @@ export const useMonkeyTypeStore = create<MonkeyTypeState>()(
             partialize: (state) => ({
                 mode: state.mode,
                 config: state.config,
+                language: state.language,
                 history: state.history
             }), // Only persist config and history (live stats are volatile)
         }

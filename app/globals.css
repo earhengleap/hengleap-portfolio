@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .font-hanuman {
+    font-family: var(--font-hanuman), ui-sans-serif, system-ui;
+  }
+}
+
 @layer base {
 
   /* Default Theme (Codex Coder Dark) */
